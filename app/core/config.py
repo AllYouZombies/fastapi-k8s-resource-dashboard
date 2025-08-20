@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
-from typing import List, Optional
+from pydantic import field_validator
+from typing import List, Optional, Union
 from functools import lru_cache
 
 
@@ -29,6 +30,22 @@ class Settings(BaseSettings):
     # API settings
     cors_origins: List[str] = ["*"]
     page_size: int = 20
+
+    @field_validator('excluded_namespaces', mode='before')
+    @classmethod
+    def parse_excluded_namespaces(cls, v: Union[str, List[str]]) -> List[str]:
+        """Parse comma-separated string or return list as-is"""
+        if isinstance(v, str):
+            return [ns.strip() for ns in v.split(',') if ns.strip()]
+        return v
+
+    @field_validator('cors_origins', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        """Parse comma-separated string or return list as-is"""
+        if isinstance(v, str):
+            return [origin.strip() for origin in v.split(',') if origin.strip()]
+        return v
 
     class Config:
         env_file = ".env"
