@@ -9,10 +9,20 @@ settings = get_settings()
 
 # Create directory for SQLite database if needed
 if "sqlite" in settings.database_url:
-    db_path = settings.database_url.replace("sqlite:///", "")
+    # Extract path from sqlite URL (handle both sqlite:/// and sqlite://// formats)
+    db_path = settings.database_url.replace("sqlite:////", "/").replace("sqlite:///", "")
     if not db_path.startswith("/"):
         db_path = os.path.join(os.getcwd(), db_path)
-    Path(os.path.dirname(db_path)).mkdir(parents=True, exist_ok=True)
+    
+    db_dir = os.path.dirname(db_path)
+    if db_dir and not os.path.exists(db_dir):
+        try:
+            Path(db_dir).mkdir(parents=True, exist_ok=True)
+        except PermissionError:
+            # If we can't create the directory, try using /tmp as fallback
+            import tempfile
+            db_path = os.path.join(tempfile.gettempdir(), "k8s_metrics.db")
+            settings.database_url = f"sqlite:///{db_path}"
 
 # Create SQLAlchemy engine
 engine = create_engine(

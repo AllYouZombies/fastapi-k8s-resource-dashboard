@@ -103,9 +103,10 @@ Essential environment variables in `.env`:
 - `PROMETHEUS_URL`: Prometheus server endpoint (required)
 - `K8S_IN_CLUSTER`: Boolean for in-cluster vs external access
 - `KUBECONFIG_PATH`: Path to kubeconfig file
+- `HOST_UID`/`HOST_GID`: Host user credentials for kubeconfig access
 - `COLLECTION_INTERVAL_MINUTES`: Collection frequency
 - `RETENTION_DAYS`: Data retention period
-- `EXCLUDED_NAMESPACES`: Namespaces to ignore
+- `EXCLUDED_NAMESPACES`: Namespaces to ignore (comma-separated string)
 
 ### Project Structure
 
@@ -132,5 +133,20 @@ Essential environment variables in `.env`:
 - **Environment-driven config**: Production-ready defaults with .env override
 - **Health checks**: Comprehensive health endpoints for monitoring
 - **Clean separation**: Services handle business logic, routes handle HTTP
+- **Secure container setup**: Uses build args to create user with host UID/GID for kubeconfig access
+- **Flexible permissions**: Handles both in-cluster and external K8s access patterns
+
+### Docker Build Arguments
+
+The Dockerfile uses build arguments to create a user with matching host credentials:
+
+```dockerfile
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+RUN groupadd -r -g ${HOST_GID:-1000} appuser && \
+    useradd -r -s /bin/bash -u ${HOST_UID:-1000} -g appuser -d /app appuser
+```
+
+This ensures the container can access the host's kubeconfig file. The `start.sh` script automatically detects host UID/GID and adds them to `.env`.
 
 This architecture supports production deployment with proper RBAC, monitoring, and horizontal scaling capabilities.

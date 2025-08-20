@@ -62,6 +62,19 @@ else
     print_status "Файл .env уже существует"
 fi
 
+# Настройка UID/GID для доступа к kubeconfig
+echo -e "\n${BLUE}Настройка прав доступа...${NC}"
+if ! grep -q "HOST_UID=" .env; then
+    echo "HOST_UID=$(id -u)" >> .env
+    echo "HOST_GID=$(id -g)" >> .env
+    print_status "Добавлены HOST_UID и HOST_GID в .env"
+else
+    # Обновляем существующие значения
+    sed -i "s/^HOST_UID=.*/HOST_UID=$(id -u)/" .env
+    sed -i "s/^HOST_GID=.*/HOST_GID=$(id -g)/" .env
+    print_status "Обновлены HOST_UID и HOST_GID в .env"
+fi
+
 # Создание необходимых директорий
 echo -e "\n${BLUE}Создание директорий...${NC}"
 mkdir -p data logs
