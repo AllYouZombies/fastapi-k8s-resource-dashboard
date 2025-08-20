@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: k8s-resource-monitor
+  namespace: k8s-resource-monitor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-resource-reader
+rules:
+- apiGroups: [""]
+  resources:
+    - "pods"
+    - "nodes"
+    - "namespaces"
+    - "resourcequotas"
+  verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-resource-reader-binding
+subjects:
+- kind: ServiceAccount
+  name: k8s-resource-monitor
+  namespace: k8s-resource-monitor
+roleRef:
+  kind: ClusterRole
+  name: pod-resource-reader
+  apiGroup: rbac.authorization.k8s.io

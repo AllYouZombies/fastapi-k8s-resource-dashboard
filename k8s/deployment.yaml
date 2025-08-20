@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: k8s-resource-monitor
+  namespace: k8s-resource-monitor
+  labels:
+    app: k8s-resource-monitor
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: k8s-resource-monitor
+  template:
+    metadata:
+      labels:
+        app: k8s-resource-monitor
+    spec:
+      serviceAccountName: k8s-resource-monitor
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      containers:
+      - name: monitor
+        image: k8s-resource-monitor:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: K8S_IN_CLUSTER
+          value: "true"
+        - name: PROMETHEUS_URL
+          value: "http://kube-prometheus-stack-prometheus.monitoring-system.svc:9090"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: data-volume
+          mountPath: /app/data
+      volumes:
+      - name: data-volume
+        emptyDir: {}

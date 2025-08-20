@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расширенный анализ ресурсов Kubernetes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .summary-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .critical { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        .success { color: #27ae60; }
+        .info { color: #3498db; }
+
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        .section h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #3498db;
+            background: white;
+            color: #3498db;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .search-box {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9em;
+            width: 200px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+
+        th, td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 2px solid #3498db;
+        }
+
+        th:hover {
+            background: #e9ecef;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .overuse { background-color: #ffebee !important; }
+        .underuse { background-color: #e8f5e8 !important; }
+
+        .eff-critical { color: #e74c3c; font-weight: bold; }
+        .eff-warning { color: #f39c12; font-weight: bold; }
+        .eff-good { color: #27ae60; font-weight: bold; }
+        .eff-normal { color: #333; }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .pagination button:hover {
+            background: #f5f5f5;
+        }
+
+        .pagination button.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .table-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            border-bottom-color: #3498db;
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .table-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Расширенный анализ ресурсов Kubernetes</h1>
+            <p>Детальный анализ по requests и limits</p>
+            <p><small id="date-info">Загрузка данных...</small></p>
+        </div>
+
+        <div id="loading" class="loading">
+            <h3>⏳ Загружаем данные...</h3>
+        </div>
+
+        <div id="content" style="display: none;">
+            <!-- Сводная информация -->
+            <div class="section">
+                <h2>📈 Сводная информация</h2>
+                <div class="summary-grid" id="summary-grid">
+                    <!-- Будет заполнено из JSON -->
+                </div>
+            </div>
+
+            <!-- Табы для переключения между таблицами -->
+            <div class="section">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('requests')">🎯 Анализ по Requests</div>
+                    <div class="tab" onclick="switchTab('limits')">🔒 Анализ по Limits</div>
+                </div>
+
+                <!-- Таблица Requests -->
+                <div id="requests-tab" class="tab-content active">
+                    <div class="table-controls">
+                        <div class="filter-group">
+                            <button class="filter-btn active" onclick="filterRequestsTable('all')">Все</button>
+                            <button class="filter-btn" onclick="filterRequestsTable('overuse')">Переиспользование</button>
+                            <button class="filter-btn" onclick="filterRequestsTable('underuse')">Недоиспользование</button>
+                            <button class="filter-btn" onclick="filterRequestsTable('normal')">Нормальное</button>
+                        </div>
+                        <input type="text" class="search-box" placeholder="Поиск по namespace/pod/container..."
+                               onkeyup="searchRequestsTable(this.value)">
+                    </div>
+
+                    <div class="table-container">
+                        <table id="requests-table">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortRequestsTable(0)">Namespace ↕</th>
+                                    <th onclick="sortRequestsTable(1)">Pod ↕</th>
+                                    <th onclick="sortRequestsTable(2)">Container ↕</th>
+                                    <th onclick="sortRequestsTable(3)">CPU REQ ↕</th>
+                                    <th onclick="sortRequestsTable(4)">CPU USE ↕</th>
+                                    <th onclick="sortRequestsTable(5)">CPU EFF% ↕</th>
+                                    <th onclick="sortRequestsTable(6)">MEM REQ ↕</th>
+                                    <th onclick="sortRequestsTable(7)">MEM USE ↕</th>
+                                    <th onclick="sortRequestsTable(8)">MEM EFF% ↕</th>
+                                    <th onclick="sortRequestsTable(9)">Статус ↕</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requests-tbody">
+                                <!-- Данные будут заполнены из JSON -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="requests-pagination">
+                        <!-- Пагинация будет сгенерирована -->
+                    </div>
+
+                    <div class="table-info">
+                        <span id="requests-info">Показано 0 из 0 записей</span>
+                        <span>10 записей на страницу</span>
+                    </div>
+                </div>
+
+                <!-- Таблица Limits -->
+                <div id="limits-tab" class="tab-content">
+                    <div class="table-controls">
+                        <div class="filter-group">
+                            <button class="filter-btn active" onclick="filterLimitsTable('all')">Все</button>
+                            <button class="filter-btn" onclick="filterLimitsTable('overuse')">Переиспользование</button>
+                            <button class="filter-btn" onclick="filterLimitsTable('underuse')">Недоиспользование</button>
+                            <button class="filter-btn" onclick="filterLimitsTable('normal')">Нормальное</button>
+                        </div>
+                        <input type="text" class="search-box" placeholder="Поиск по namespace/pod/container..."
+                               onkeyup="searchLimitsTable(this.value)">
+                    </div>
+
+                    <div class="table-container">
+                        <table id="limits-table">
+                            <thead>
+                                <tr>
+                                    <th onclick="sortLimitsTable(0)">Namespace ↕</th>
+                                    <th onclick="sortLimitsTable(1)">Pod ↕</th>
+                                    <th onclick="sortLimitsTable(2)">Container ↕</th>
+                                    <th onclick="sortLimitsTable(3)">CPU LIM ↕</th>
+                                    <th onclick="sortLimitsTable(4)">CPU USE ↕</th>
+                                    <th onclick="sortLimitsTable(5)">CPU EFF% ↕</th>
+                                    <th onclick="sortLimitsTable(6)">MEM LIM ↕</th>
+                                    <th onclick="sortLimitsTable(7)">MEM USE ↕</th>
+                                    <th onclick="sortLimitsTable(8)">MEM EFF% ↕</th>
+                                    <th onclick="sortLimitsTable(9)">Статус ↕</th>
+                                </tr>
+                            </thead>
+                            <tbody id="limits-tbody">
+                                <!-- Данные будут заполнены из JSON -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="limits-pagination">
+                        <!-- Пагинация будет сгенерирована -->
+                    </div>
+
+                    <div class="table-info">
+                        <span id="limits-info">Показано 0 из 0 записей</span>
+                        <span>10 записей на страницу</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let requestsData = [];
+        let limitsData = [];
+        let filteredRequestsData = [];
+        let filteredLimitsData = [];
+        let currentRequestsPage = 1;
+        let currentLimitsPage = 1;
+        const itemsPerPage = 10;
+
+        // Загружаем данные из JSON
+        fetch('k8s-resources-data.json')
+            .then(response => response.json())
+            .then(data => {
+                allData = data.containers;
+                requestsData = [...allData];
+                limitsData = [...allData];
+                filteredRequestsData = [...allData];
+                filteredLimitsData = [...allData];
+
+                displaySummary(data.metadata);
+                displayRequestsTable();
+                displayLimitsTable();
+                updateDate(data.metadata.generated_at);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки:', error);
+                document.getElementById('loading').innerHTML =
+                    '<h3>❌ Ошибка загрузки данных</h3><p>Убедитесь, что файл k8s-resources-data.json существует и запущен веб-сервер.</p>';
+            });
+
+        function updateDate(dateStr) {
+            const date = new Date(dateStr);
+            document.getElementById('date-info').textContent =
+                `Дата анализа: ${date.toLocaleDateString('ru-RU')} ${date.toLocaleTimeString('ru-RU')}`;
+        }
+
+        function displaySummary(metadata) {
+            const summary = metadata.analysis_summary;
+            const cluster = metadata.cluster_info;
+
+            document.getElementById('summary-grid').innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-number info">${cluster.total_containers}</div>
+                    <div class="summary-label">Всего контейнеров</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number info">${cluster.total_pods}</div>
+                    <div class="summary-label">Всего подов</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number critical">${summary.requests.overuse_cpu}</div>
+                    <div class="summary-label">Переиспользование CPU requests</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number critical">${summary.requests.overuse_memory}</div>
+                    <div class="summary-label">Переиспользование Memory requests</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number warning">${summary.requests.underuse_cpu}</div>
+                    <div class="summary-label">Недоиспользование CPU requests</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number warning">${summary.requests.underuse_memory}</div>
+                    <div class="summary-label">Недоиспользование Memory requests</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number success">${summary.requests.potential_cpu_savings_cores}</div>
+                    <div class="summary-label">Потенциальная экономия CPU (ядра)</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-number success">${summary.requests.potential_memory_savings_gi}</div>
+                    <div class="summary-label">Потенциальная экономия Memory (Gi)</div>
+                </div>
+            `;
+        }
+
+        function switchTab(tabName) {
+            // Обновляем активный таб
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        function displayRequestsTable() {
+            const tbody = document.getElementById('requests-tbody');
+            const startIndex = (currentRequestsPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredRequestsData.slice(startIndex, endIndex);
+
+            tbody.innerHTML = '';
+
+            pageData.forEach(container => {
+                const row = document.createElement('tr');
+
+                // Определяем статус и класс строки
+                const cpuCategory = container.analysis.requests.cpu_category;
+                const memCategory = container.analysis.requests.memory_category;
+                let status = 'Нормальное';
+                let rowClass = '';
+
+                if (cpuCategory === 'overuse' || memCategory === 'overuse') {
+                    status = 'Переиспользование';
+                    rowClass = 'overuse';
+                } else if (cpuCategory === 'underuse' || memCategory === 'underuse') {
+                    status = 'Недоиспользование';
+                    rowClass = 'underuse';
+                }
+
+                row.className = rowClass;
+
+                const formatEfficiency = (eff, type = 'cpu') => {
+                    if (eff === 0 || eff === '-') return '<span class="eff-normal">-</span>';
+                    if (type === 'cpu') {
+                        if (eff > 100) return `<span class="eff-critical">${eff}%</span>`;
+                        if (eff < 20) return `<span class="eff-warning">${eff}%</span>`;
+                        if (eff < 80) return `<span class="eff-good">${eff}%</span>`;
+                        return `<span class="eff-normal">${eff}%</span>`;
+                    } else { // memory
+                        if (eff > 100) return `<span class="eff-critical">${eff}%</span>`;
+                        if (eff < 50) return `<span class="eff-warning">${eff}%</span>`;
+                        if (eff < 90) return `<span class="eff-good">${eff}%</span>`;
+                        return `<span class="eff-normal">${eff}%</span>`;
+                    }
+                };
+
+                row.innerHTML = `
+                    <td>${container.namespace}</td>
+                    <td>${container.pod}</td>
+                    <td>${container.container}</td>
+                    <td>${container.resources.cpu.request}</td>
+                    <td>${container.resources.cpu.usage}</td>
+                    <td>${formatEfficiency(container.resources.cpu.request_efficiency_percent, 'cpu')}</td>
+                    <td>${container.resources.memory.request}</td>
+                    <td>${container.resources.memory.usage}</td>
+                    <td>${formatEfficiency(container.resources.memory.request_efficiency_percent, 'memory')}</td>
+                    <td>${status}</td>
+                `;
+
+                row.style.cursor = 'pointer';
+                row.title = 'Клик для команд kubectl';
+                row.onclick = () => showContainerDetails(container);
+
+                tbody.appendChild(row);
+            });
+
+            updateRequestsPagination();
+            updateRequestsInfo();
+        }
+
+        function displayLimitsTable() {
+            const tbody = document.getElementById('limits-tbody');
+            const startIndex = (currentLimitsPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = filteredLimitsData.slice(startIndex, endIndex);
+
+            tbody.innerHTML = '';
+
+            pageData.forEach(container => {
+                const row = document.createElement('tr');
+
+                // Определяем статус и класс строки для limits
+                const cpuCategory = container.analysis.limits.cpu_category;
+                const memCategory = container.analysis.limits.memory_category;
+                let status = 'Нормальное';
+                let rowClass = '';
+
+                if (cpuCategory === 'overuse' || memCategory === 'overuse') {
+                    status = 'Переиспользование';
+                    rowClass = 'overuse';
+                } else if (cpuCategory === 'underuse' || memCategory === 'underuse') {
+                    status = 'Недоиспользование';
+                    rowClass = 'underuse';
+                }
+
+                row.className = rowClass;
+
+                const formatEfficiency = (eff, type = 'cpu') => {
+                    if (eff === 0 || eff === '-') return '<span class="eff-normal">-</span>';
+                    if (type === 'cpu') {
+                        if (eff > 80) return `<span class="eff-critical">${eff}%</span>`;
+                        if (eff < 10) return `<span class="eff-warning">${eff}%</span>`;
+                        if (eff < 60) return `<span class="eff-good">${eff}%</span>`;
+                        return `<span class="eff-normal">${eff}%</span>`;
+                    } else { // memory
+                        if (eff > 80) return `<span class="eff-critical">${eff}%</span>`;
+                        if (eff < 30) return `<span class="eff-warning">${eff}%</span>`;
+                        if (eff < 70) return `<span class="eff-good">${eff}%</span>`;
+                        return `<span class="eff-normal">${eff}%</span>`;
+                    }
+                };
+
+                row.innerHTML = `
+                    <td>${container.namespace}</td>
+                    <td>${container.pod}</td>
+                    <td>${container.container}</td>
+                    <td>${container.resources.cpu.limit}</td>
+                    <td>${container.resources.cpu.usage}</td>
+                    <td>${formatEfficiency(container.resources.cpu.limit_efficiency_percent, 'cpu')}</td>
+                    <td>${container.resources.memory.limit}</td>
+                    <td>${container.resources.memory.usage}</td>
+                    <td>${formatEfficiency(container.resources.memory.limit_efficiency_percent, 'memory')}</td>
+                    <td>${status}</td>
+                `;
+
+                row.style.cursor = 'pointer';
+                row.title = 'Клик для команд kubectl';
+                row.onclick = () => showContainerDetails(container);
+
+                tbody.appendChild(row);
+            });
+
+            updateLimitsPagination();
+            updateLimitsInfo();
+        }
+
+        function updateRequestsPagination() {
+            const totalPages = Math.ceil(filteredRequestsData.length / itemsPerPage);
+            const pagination = document.getElementById('requests-pagination');
+
+            let html = `
+                <button onclick="changeRequestsPage(${currentRequestsPage - 1})"
+                        ${currentRequestsPage === 1 ? 'disabled' : ''}>‹ Назад</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentRequestsPage - 2 && i <= currentRequestsPage + 2)) {
+                    html += `<button onclick="changeRequestsPage(${i})"
+                             ${i === currentRequestsPage ? 'class="active"' : ''}>${i}</button>`;
+                } else if (i === currentRequestsPage - 3 || i === currentRequestsPage + 3) {
+                    html += '<span>...</span>';
+                }
+            }
+
+            html += `
+                <button onclick="changeRequestsPage(${currentRequestsPage + 1})"
+                        ${currentRequestsPage === totalPages ? 'disabled' : ''}>Вперед ›</button>
+            `;
+
+            pagination.innerHTML = html;
+        }
+
+        function updateLimitsPagination() {
+            const totalPages = Math.ceil(filteredLimitsData.length / itemsPerPage);
+            const pagination = document.getElementById('limits-pagination');
+
+            let html = `
+                <button onclick="changeLimitsPage(${currentLimitsPage - 1})"
+                        ${currentLimitsPage === 1 ? 'disabled' : ''}>‹ Назад</button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentLimitsPage - 2 && i <= currentLimitsPage + 2)) {
+                    html += `<button onclick="changeLimitsPage(${i})"
+                             ${i === currentLimitsPage ? 'class="active"' : ''}>${i}</button>`;
+                } else if (i === currentLimitsPage - 3 || i === currentLimitsPage + 3) {
+                    html += '<span>...</span>';
+                }
+            }
+
+            html += `
+                <button onclick="changeLimitsPage(${currentLimitsPage + 1})"
+                        ${currentLimitsPage === totalPages ? 'disabled' : ''}>Вперед ›</button>
+            `;
+
+            pagination.innerHTML = html;
+        }
+
+        function changeRequestsPage(page) {
+            const totalPages = Math.ceil(filteredRequestsData.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentRequestsPage = page;
+                displayRequestsTable();
+            }
+        }
+
+        function changeLimitsPage(page) {
+            const totalPages = Math.ceil(filteredLimitsData.length / itemsPerPage);
+            if (page >= 1 && page <= totalPages) {
+                currentLimitsPage = page;
+                displayLimitsTable();
+            }
+        }
+
+        function updateRequestsInfo() {
+            const total = filteredRequestsData.length;
+            const start = (currentRequestsPage - 1) * itemsPerPage + 1;
+            const end = Math.min(currentRequestsPage * itemsPerPage, total);
+            document.getElementById('requests-info').textContent =
+                `Показано ${start}-${end} из ${total} записей`;
+        }
+
+        function updateLimitsInfo() {
+            const total = filteredLimitsData.length;
+            const start = (currentLimitsPage - 1) * itemsPerPage + 1;
+            const end = Math.min(currentLimitsPage * itemsPerPage, total);
+            document.getElementById('limits-info').textContent =
+                `Показано ${start}-${end} из ${total} записей`;
+        }
+
+        function filterRequestsTable(category) {
+            // Обновляем активную кнопку
+            document.querySelectorAll('#requests-tab .filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (category === 'all') {
+                filteredRequestsData = [...requestsData];
+            } else {
+                filteredRequestsData = requestsData.filter(container => {
+                    const cpuCat = container.analysis.requests.cpu_category;
+                    const memCat = container.analysis.requests.memory_category;
+                    return cpuCat === category || memCat === category;
+                });
+            }
+
+            currentRequestsPage = 1;
+            displayRequestsTable();
+        }
+
+        function filterLimitsTable(category) {
+            // Обновляем активную кнопку
+            document.querySelectorAll('#limits-tab .filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (category === 'all') {
+                filteredLimitsData = [...limitsData];
+            } else {
+                filteredLimitsData = limitsData.filter(container => {
+                    const cpuCat = container.analysis.limits.cpu_category;
+                    const memCat = container.analysis.limits.memory_category;
+                    return cpuCat === category || memCat === category;
+                });
+            }
+
+            currentLimitsPage = 1;
+            displayLimitsTable();
+        }
+
+        function searchRequestsTable(query) {
+            const searchTerm = query.toLowerCase();
+            if (searchTerm === '') {
+                filteredRequestsData = [...requestsData];
+            } else {
+                filteredRequestsData = requestsData.filter(container =>
+                    container.namespace.toLowerCase().includes(searchTerm) ||
+                    container.pod.toLowerCase().includes(searchTerm) ||
+                    container.container.toLowerCase().includes(searchTerm)
+                );
+            }
+            currentRequestsPage = 1;
+            displayRequestsTable();
+        }
+
+        function searchLimitsTable(query) {
+            const searchTerm = query.toLowerCase();
+            if (searchTerm === '') {
+                filteredLimitsData = [...limitsData];
+            } else {
+                filteredLimitsData = limitsData.filter(container =>
+                    container.namespace.toLowerCase().includes(searchTerm) ||
+                    container.pod.toLowerCase().includes(searchTerm) ||
+                    container.container.toLowerCase().includes(searchTerm)
+                );
+            }
+            currentLimitsPage = 1;
+            displayLimitsTable();
+        }
+
+        function sortRequestsTable(columnIndex) {
+            const getValue = (container, index) => {
+                switch(index) {
+                    case 0: return container.namespace;
+                    case 1: return container.pod;
+                    case 2: return container.container;
+                    case 5: return container.resources.cpu.request_efficiency_percent;
+                    case 8: return container.resources.memory.request_efficiency_percent;
+                    default: return '';
+                }
+            };
+
+            filteredRequestsData.sort((a, b) => {
+                const aVal = getValue(a, columnIndex);
+                const bVal = getValue(b, columnIndex);
+
+                if (typeof aVal === 'number') {
+                    return bVal - aVal; // Убывание для чисел
+                } else {
+                    return aVal.localeCompare(bVal); // Возрастание для строк
+                }
+            });
+
+            displayRequestsTable();
+        }
+
+        function sortLimitsTable(columnIndex) {
+            const getValue = (container, index) => {
+                switch(index) {
+                    case 0: return container.namespace;
+                    case 1: return container.pod;
+                    case 2: return container.container;
+                    case 5: return container.resources.cpu.limit_efficiency_percent;
+                    case 8: return container.resources.memory.limit_efficiency_percent;
+                    default: return '';
+                }
+            };
+
+            filteredLimitsData.sort((a, b) => {
+                const aVal = getValue(a, columnIndex);
+                const bVal = getValue(b, columnIndex);
+
+                if (typeof aVal === 'number') {
+                    return bVal - aVal; // Убывание для чисел
+                } else {
+                    return aVal.localeCompare(bVal); // Возрастание для строк
+                }
+            });
+
+            displayLimitsTable();
+        }
+
+        function showContainerDetails(container) {
+            const details = `Детали контейнера:
+Namespace: ${container.namespace}
+Pod: ${container.pod}
+Container: ${container.container}
+
+Ресурсы (Requests):
+CPU: ${container.resources.cpu.usage} / ${container.resources.cpu.request} (${container.resources.cpu.request_efficiency_percent}%)
+Memory: ${container.resources.memory.usage} / ${container.resources.memory.request} (${container.resources.memory.request_efficiency_percent}%)
+
+Ресурсы (Limits):
+CPU: ${container.resources.cpu.usage} / ${container.resources.cpu.limit} (${container.resources.cpu.limit_efficiency_percent}%)
+Memory: ${container.resources.memory.usage} / ${container.resources.memory.limit} (${container.resources.memory.limit_efficiency_percent}%)
+
+Команды kubectl:
+kubectl top pod -n ${container.namespace}
+kubectl describe pod -n ${container.namespace} ${container.pod}
+kubectl get pod -n ${container.namespace} ${container.pod} -o yaml`;
+
+            alert(details);
+        }
+    </script>
+</body>
+</html>

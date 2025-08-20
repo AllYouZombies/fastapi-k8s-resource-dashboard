@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  k8s-resource-monitor:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: ${IMAGE_NAME:-k8s-resource-monitor:latest}
+    container_name: ${CONTAINER_NAME:-k8s-resource-monitor}
+    ports:
+      - "${HOST_PORT:-8000}:${CONTAINER_PORT:-8000}"
+    volumes:
+      # Подключение kubeconfig для доступа к K8s API
+      - ${KUBECONFIG_PATH:-~/.kube/config}:/app/.kube/config:ro
+      # Постоянное хранение данных
+      - ${DATA_PATH:-./data}:/app/data
+      # Логи приложения
+      - ${LOGS_PATH:-./logs}:/app/logs
+    env_file:
+      - .env
+    environment:
+      # Переопределения для Docker окружения
+      - DATABASE_URL=sqlite:///app/data/k8s_metrics.db
+      - K8S_CONFIG_PATH=/app/.kube/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${CONTAINER_PORT:-8000}/health/liveness"]
+      interval: ${HEALTHCHECK_INTERVAL:-30s}
+      timeout: ${HEALTHCHECK_TIMEOUT:-10s}
+      retries: ${HEALTHCHECK_RETRIES:-3}
+      start_period: ${HEALTHCHECK_START_PERIOD:-40s}

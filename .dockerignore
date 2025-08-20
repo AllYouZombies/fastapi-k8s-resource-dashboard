@@ -1,0 +1,145 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+docs/
+*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Application data
+*.db
+*.sqlite
+*.sqlite3
+k8s_metrics.db*
+*.log
+logs/
+data/
+backups/
+
+# Environment files
+.env*
+!.env.example
+
+# Temporary files
+temp/
+tmp/
+*.tmp
+*.bak
+*.backup
+
+# Test files
+tests/
+test_*.py
+*_test.py
+pytest.ini
+.pytest_cache/
+.coverage
+.tox/
+htmlcov/
+
+# Kubernetes configs
+kubeconfig
+.kube/
+*.kubeconfig
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+*.csr
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# Package managers
+Pipfile
+Pipfile.lock
+poetry.lock
+pyproject.toml
+setup.py
+setup.cfg
+
+# Jupyter Notebooks
+*.ipynb
+.ipynb_checkpoints
+
+# mypy
+.mypy_cache/
+
+# Development tools
+.pre-commit-config.yaml
+.flake8
+.pylintrc
+tox.ini
+
+# Kubernetes manifests (included via COPY in Dockerfile if needed)
+k8s/
+
+# Node.js (if any frontend build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+package-lock.json
+yarn.lock
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
