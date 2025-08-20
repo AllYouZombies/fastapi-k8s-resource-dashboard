@@ -12,8 +12,8 @@
 ## Шаг 1: Клонирование
 
 ```bash
-git clone <repository-url>
-cd k8s-resource-monitor
+git clone https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard.git
+cd fastapi-k8s-resource-dashboard
 ```
 
 ## Шаг 2: Настройка

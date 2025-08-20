@@ -13,6 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}🚀 Kubernetes Resource Monitor - Startup Script${NC}"
+echo -e "${BLUE}Repository: https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard${NC}"
 echo "=================================================="
 
 # Функция для вывода статуса
