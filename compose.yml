@@ -3,6 +3,9 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
     image: ${IMAGE_NAME:-k8s-resource-monitor:latest}
     container_name: ${CONTAINER_NAME:-k8s-resource-monitor}
     # Запуск от имени пользователя хоста для доступа к kubeconfig
@@ -20,8 +23,8 @@ services:
       - .env
     environment:
       # Переопределения для Docker окружения
-      - DATABASE_URL=sqlite:////tmp/k8s_metrics.db
-      - K8S_CONFIG_PATH=/app/.kube/config
+      - DATABASE_URL=sqlite:////app/k8s_metrics.db
+      - K8S_CONFIG_PATH=/app/.kube/config:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${CONTAINER_PORT:-8000}/health/liveness"]
