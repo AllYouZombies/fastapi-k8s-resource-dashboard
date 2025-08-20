@@ -38,7 +38,7 @@ if ! command -v docker &> /dev/null; then
 fi
 print_status "Docker найден"
 
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
     print_error "Docker Compose не установлен!"
     exit 1
 fi
@@ -101,21 +101,36 @@ echo -e "\n${BLUE}Запуск приложения...${NC}"
 # Остановка старых контейнеров если есть
 if docker ps -q -f name=k8s-resource-monitor &> /dev/null; then
     echo "Остановка старых контейнеров..."
-    docker-compose down
+    if command -v docker-compose &> /dev/null; then
+        docker-compose down
+    else
+        docker compose down
+    fi
 fi
 
 # Сборка и запуск
 echo "Сборка Docker образа..."
-docker-compose build
-
-echo "Запуск контейнера..."
-docker-compose up -d
+if command -v docker-compose &> /dev/null; then
+    docker-compose build
+    echo "Запуск контейнера..."
+    docker-compose up -d
+else
+    docker compose build
+    echo "Запуск контейнера..."
+    docker compose up -d
+fi
 
 # Проверка запуска
 echo -e "\n${BLUE}Проверка состояния...${NC}"
 sleep 5
 
-if docker-compose ps | grep -q "Up"; then
+if command -v docker-compose &> /dev/null; then
+    COMPOSE_CMD="docker-compose"
+else
+    COMPOSE_CMD="docker compose"
+fi
+
+if $COMPOSE_CMD ps | grep -q "Up"; then
     print_status "Контейнер запущен успешно"
     
     # Ожидание готовности приложения
@@ -139,14 +154,21 @@ if docker-compose ps | grep -q "Up"; then
     echo -e "❤️ Health Check: ${BLUE}http://localhost:8000/health${NC}"
     
     echo -e "\n${BLUE}Полезные команды:${NC}"
-    echo "  Логи:           docker-compose logs -f"
-    echo "  Остановка:      docker-compose down"
-    echo "  Перезапуск:     docker-compose restart"
-    echo "  Статус:         docker-compose ps"
+    if command -v docker-compose &> /dev/null; then
+        echo "  Логи:           docker-compose logs -f"
+        echo "  Остановка:      docker-compose down"
+        echo "  Перезапуск:     docker-compose restart"
+        echo "  Статус:         docker-compose ps"
+    else
+        echo "  Логи:           docker compose logs -f"
+        echo "  Остановка:      docker compose down"
+        echo "  Перезапуск:     docker compose restart"
+        echo "  Статус:         docker compose ps"
+    fi
     
 else
     print_error "Ошибка запуска контейнера!"
     echo -e "\n${BLUE}Логи для диагностики:${NC}"
-    docker-compose logs --tail 20
+    $COMPOSE_CMD logs --tail 20
     exit 1
 fi

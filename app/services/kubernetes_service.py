@@ -44,7 +44,7 @@ class KubernetesService:
             pods_data = []
 
             for pod in pods_list.items:
-                if pod.metadata.namespace in self.settings.excluded_namespaces:
+                if pod.metadata.namespace in self.settings.excluded_namespaces_list:
                     continue
 
                 pod_info = {
