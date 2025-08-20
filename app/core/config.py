@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import field_validator
-from typing import List, Optional, Union
+from typing import Optional
 from functools import lru_cache
 
 
@@ -13,7 +12,7 @@ class Settings(BaseSettings):
     # Kubernetes settings
     k8s_in_cluster: bool = False  # Default to false for easier local development
     k8s_config_path: Optional[str] = None
-    excluded_namespaces: List[str] = ["kube-system", "kube-public", "kube-node-lease"]
+    excluded_namespaces: str = "kube-system,kube-public,kube-node-lease"
 
     # Prometheus settings
     prometheus_url: str = "http://localhost:9090"  # More generic default
@@ -28,24 +27,18 @@ class Settings(BaseSettings):
     enable_scheduler: bool = True
 
     # API settings
-    cors_origins: List[str] = ["*"]
+    cors_origins: str = "*"
     page_size: int = 20
 
-    @field_validator('excluded_namespaces', mode='before')
-    @classmethod
-    def parse_excluded_namespaces(cls, v: Union[str, List[str]]) -> List[str]:
-        """Parse comma-separated string or return list as-is"""
-        if isinstance(v, str):
-            return [ns.strip() for ns in v.split(',') if ns.strip()]
-        return v
+    @property
+    def excluded_namespaces_list(self):
+        """Return excluded_namespaces as list"""
+        return [ns.strip() for ns in self.excluded_namespaces.split(',') if ns.strip()]
 
-    @field_validator('cors_origins', mode='before')
-    @classmethod
-    def parse_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
-        """Parse comma-separated string or return list as-is"""
-        if isinstance(v, str):
-            return [origin.strip() for origin in v.split(',') if origin.strip()]
-        return v
+    @property
+    def cors_origins_list(self):
+        """Return cors_origins as list"""
+        return [origin.strip() for origin in self.cors_origins.split(',') if origin.strip()]
 
     class Config:
         env_file = ".env"

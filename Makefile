@@ -23,34 +23,34 @@ setup: ## Первоначальная настройка проекта
 
 start: setup ## Запуск приложения с Docker Compose
 	@echo "$(GREEN)Запуск приложения...$(NC)"
-	@docker-compose -f $(COMPOSE_FILE) up -d
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) up -d; else docker compose -f $(COMPOSE_FILE) up -d; fi
 	@echo "$(GREEN)✓ Приложение запущено: http://localhost:8000$(NC)"
 
 stop: ## Остановка приложения
 	@echo "$(YELLOW)Остановка приложения...$(NC)"
-	@docker-compose -f $(COMPOSE_FILE) down
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) down; else docker compose -f $(COMPOSE_FILE) down; fi
 	@echo "$(GREEN)✓ Приложение остановлено$(NC)"
 
 restart: ## Перезапуск приложения
 	@echo "$(YELLOW)Перезапуск приложения...$(NC)"
-	@docker-compose -f $(COMPOSE_FILE) restart
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) restart; else docker compose -f $(COMPOSE_FILE) restart; fi
 	@echo "$(GREEN)✓ Приложение перезапущено$(NC)"
 
 logs: ## Просмотр логов
-	@docker-compose -f $(COMPOSE_FILE) logs -f $(CONTAINER_NAME)
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) logs -f $(CONTAINER_NAME); else docker compose -f $(COMPOSE_FILE) logs -f $(CONTAINER_NAME); fi
 
 build: ## Сборка Docker образа
 	@echo "$(GREEN)Сборка образа...$(NC)"
-	@docker-compose -f $(COMPOSE_FILE) build --no-cache
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) build --no-cache; else docker compose -f $(COMPOSE_FILE) build --no-cache; fi
 	@echo "$(GREEN)✓ Образ собран$(NC)"
 
 rebuild: build start ## Пересборка и запуск
 
 status: ## Статус контейнеров
-	@docker-compose -f $(COMPOSE_FILE) ps
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) ps; else docker compose -f $(COMPOSE_FILE) ps; fi
 
 shell: ## Вход в контейнер
-	@docker-compose -f $(COMPOSE_FILE) exec $(CONTAINER_NAME) bash
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) exec $(CONTAINER_NAME) bash; else docker compose -f $(COMPOSE_FILE) exec $(CONTAINER_NAME) bash; fi
 
 dev: ## Запуск в режиме разработки (локально)
 	@echo "$(GREEN)Запуск в режиме разработки...$(NC)"
@@ -78,7 +78,7 @@ clean: ## Очистка данных и логов
 	@echo "$(GREEN)✓ Данные очищены$(NC)"
 
 clean-all: stop clean ## Полная очистка (остановка + очистка данных)
-	@docker-compose -f $(COMPOSE_FILE) down -v
+	@if command -v docker-compose >/dev/null 2>&1; then docker-compose -f $(COMPOSE_FILE) down -v; else docker compose -f $(COMPOSE_FILE) down -v; fi
 	@docker system prune -f
 	@echo "$(GREEN)✓ Полная очистка завершена$(NC)"
 
@@ -111,7 +111,7 @@ k8s-delete: ## Удаление из Kubernetes
 check-deps: ## Проверка зависимостей
 	@echo "$(GREEN)Проверка зависимостей...$(NC)"
 	@command -v docker >/dev/null 2>&1 || { echo "$(RED)Docker не установлен$(NC)"; exit 1; }
-	@command -v docker-compose >/dev/null 2>&1 || { echo "$(RED)Docker Compose не установлен$(NC)"; exit 1; }
+	@(command -v docker-compose >/dev/null 2>&1 || docker compose version >/dev/null 2>&1) || { echo "$(RED)Docker Compose не установлен$(NC)"; exit 1; }
 	@command -v kubectl >/dev/null 2>&1 || echo "$(YELLOW)kubectl не найден$(NC)"
 	@echo "$(GREEN)✓ Основные зависимости проверены$(NC)"
 
