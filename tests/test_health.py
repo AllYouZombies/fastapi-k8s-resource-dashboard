@@ -11,7 +11,7 @@ def test_health_liveness():
     response = client.get("/health/liveness")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "healthy"
+    assert data["status"] == "alive"
 
 
 def test_health_readiness():
@@ -19,7 +19,7 @@ def test_health_readiness():
     response = client.get("/health/readiness")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "healthy"
+    assert data["status"] == "ready"
 
 
 def test_health_root():
@@ -27,5 +27,7 @@ def test_health_root():
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
-    assert "database" in data
-    assert "application" in data
+    assert "database_status" in data
+    assert "kubernetes_status" in data
+    assert "prometheus_status" in data
+    assert "status" in data

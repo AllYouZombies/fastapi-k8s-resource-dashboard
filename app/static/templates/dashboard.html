@@ -215,11 +215,11 @@
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center py-3">
         <h1 class="h2">Kubernetes Resource Monitor</h1>
-        <div class="btn-toolbar">
-            <button class="btn btn-sm btn-success me-2" onclick="refreshData()">
+        <div class="btn-toolbar align-items-center">
+            <span id="lastUpdate" class="text-muted small me-3">Last updated: now</span>
+            <button class="btn btn-sm btn-success" onclick="refreshData()">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
-            <span id="lastUpdate" class="text-muted small">Last updated: now</span>
         </div>
     </div>
 
@@ -372,11 +372,11 @@
                 </select>
             </div>
             <div class="col-md-4">
-                <label class="form-label">
+                <label for="hideIncompleteData" class="form-label">
                     <i class="fas fa-filter"></i>
                     Data Completeness:
                 </label>
-                <div class="filter-special">
+                <div class="d-flex align-items-center" style="height: 52px;">
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
                         <label class="form-check-label" for="hideIncompleteData">
@@ -737,7 +737,7 @@
                         <ul class="mb-0 mt-2">
                             <li><strong>Requests</strong> are based on current usage with appropriate rounding (50m/100m for CPU, 64Mi/128Mi/0.1Gi for memory)</li>
                             <li><strong>Limits</strong> are based on historical maximum usage with 25% headroom to prevent OOMKilled</li>
-                            <li>Historical data shows min/current/max values to provide full context</li>
+                            <li>Historical data shows current/max values to provide full context</li>
                             <li>All values consider the entire pod lifecycle for accurate resource planning</li>
                         </ul>
                     </div>

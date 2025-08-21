@@ -134,6 +134,9 @@ PROMETHEUS_URL=http://your-prometheus:9090
 # Path to kubeconfig (defaults to ~/.kube/config)
 KUBECONFIG_PATH=~/.kube/config
 
+# Specific Kubernetes context (prevents data corruption when host context changes)
+K8S_CONTEXT=my-cluster-context
+
 # Host user UID/GID (automatically set by start.sh)
 HOST_UID=1000
 HOST_GID=1000

@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # Kubernetes settings
     k8s_in_cluster: bool = False  # Default to false for easier local development
     k8s_config_path: Optional[str] = None
+    k8s_context: Optional[str] = None  # Specific context to use
     excluded_namespaces: str = "kube-system,kube-public,kube-node-lease"
 
     # Prometheus settings
