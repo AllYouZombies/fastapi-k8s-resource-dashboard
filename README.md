@@ -30,12 +30,30 @@
 
 ## 🚀 Quick Start
 
+### One-Line Installation
+
+**Start in 30 seconds with a single command:**
+
+```bash
+# Replace with your Prometheus URL
+curl -fsSL https://raw.githubusercontent.com/AllYouZombies/fastapi-k8s-resource-dashboard/master/scripts/quick-start.sh | PROMETHEUS_URL=http://your-prometheus:9090 bash
+```
+
+**Examples:**
+```bash
+# Local Prometheus
+curl -fsSL https://raw.githubusercontent.com/AllYouZombies/fastapi-k8s-resource-dashboard/master/scripts/quick-start.sh | PROMETHEUS_URL=http://localhost:9090 bash
+
+# Kubernetes Prometheus (port-forwarded)
+curl -fsSL https://raw.githubusercontent.com/AllYouZombies/fastapi-k8s-resource-dashboard/master/scripts/quick-start.sh | PROMETHEUS_URL=http://host.docker.internal:9090 bash
+```
+
 ### Prerequisites
 - Docker and Docker Compose
 - Kubernetes cluster access (kubeconfig)
 - Prometheus server access
 
-### Installation & Launch
+### Manual Installation
 
 ```bash
 # 1. Clone the repository
