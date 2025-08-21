@@ -46,7 +46,6 @@ docker-compose logs -f
 
 - 🌐 **Основной интерфейс**: http://localhost:8000
 - 📊 **Dashboard**: http://localhost:8000/dashboard  
-- 🔧 **API документация**: http://localhost:8000/docs
 - ❤️ **Health Check**: http://localhost:8000/health
 
 ## 📋 Описание
@@ -183,7 +182,7 @@ docker-compose down         # Остановка и удаление
 - `GET /api/summary` - Сводка по namespace'ам
 - `GET /health` - Проверка состояния системы
 
-Документация API доступна по адресу: http://localhost:8000/docs
+Статус системы доступен по адресу: http://localhost:8000/health
 
 ## 🚀 Развертывание в Kubernetes
 

@@ -30,6 +30,102 @@
 .sortable:hover {
     background-color: rgba(0, 0, 0, 0.05);
 }
+
+.nav-tabs {
+    border-bottom: 3px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.nav-tabs .nav-link {
+    border: 2px solid transparent;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 12px 20px;
+    margin-right: 0.25rem;
+    color: #495057;
+    background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    background: linear-gradient(45deg, #ffffff 0%, #f8f9fa 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-tabs .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(45deg, #0d6efd 0%, #0056b3 100%);
+    border-color: #0d6efd;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Unified filter styling */
+.filter-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.filter-container .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.filter-container .form-label i {
+    margin-right: 8px;
+    color: #0d6efd;
+}
+
+.filter-container .form-control,
+.filter-container .form-select {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.filter-container .form-control:focus,
+.filter-container .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    background: #ffffff;
+}
+
+.filter-special {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.filter-special:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+}
+
+.filter-special .form-check-label {
+    color: #856404;
+    font-weight: 600;
+}
+
+.filter-special .form-check-input:checked {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
 </style>
 {% endblock %}
 
@@ -130,20 +226,42 @@
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">CPU Utilization Trends</div>
+                <div class="card-header">CPU vs Requests (%)</div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <canvas id="cpuChart"></canvas>
+                        <canvas id="cpuRequestsChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Memory Utilization Trends</div>
+                <div class="card-header">CPU vs Limits (%)</div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <canvas id="memoryChart"></canvas>
+                        <canvas id="cpuLimitsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Memory vs Requests (%)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="memoryRequestsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Memory vs Limits (%)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="memoryLimitsChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -151,30 +269,40 @@
     </div>
 
     <!-- Filters -->
-    <div class="row mb-3">
-        <div class="col-md-4">
-            <label for="podSearch" class="form-label">Search Pod Name:</label>
-            <input type="text" id="podSearch" class="form-control" placeholder="Enter pod name..." value="{{ search }}">
-        </div>
-        <div class="col-md-4">
-            <label for="namespaceFilter" class="form-label">Filter by Namespace:</label>
-            <select id="namespaceFilter" class="form-select">
-                <option value="all" {% if selected_namespace == "all" %}selected{% endif %}>All Namespaces</option>
-                {% for ns in namespaces %}
-                <option value="{{ ns }}" {% if selected_namespace == ns %}selected{% endif %}>{{ ns }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Data Completeness:</label>
-            <div class="card border-warning bg-light p-2">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
-                    <label class="form-check-label fw-bold" for="hideIncompleteData">
-                        <i class="fas fa-filter me-1"></i>
-                        Hide incomplete records
-                    </label>
-                    <small class="text-muted d-block">Excludes records missing requests/limits</small>
+    <div class="filter-container">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="podSearch" class="form-label">
+                    <i class="fas fa-search"></i>
+                    Search Pod Name:
+                </label>
+                <input type="text" id="podSearch" class="form-control" placeholder="Enter pod name..." value="{{ search }}">
+            </div>
+            <div class="col-md-4">
+                <label for="namespaceFilter" class="form-label">
+                    <i class="fas fa-layer-group"></i>
+                    Filter by Namespace:
+                </label>
+                <select id="namespaceFilter" class="form-select">
+                    <option value="all" {% if selected_namespace == "all" %}selected{% endif %}>All Namespaces</option>
+                    {% for ns in namespaces %}
+                    <option value="{{ ns }}" {% if selected_namespace == ns %}selected{% endif %}>{{ ns }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="fas fa-filter"></i>
+                    Data Completeness:
+                </label>
+                <div class="filter-special">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
+                        <label class="form-check-label" for="hideIncompleteData">
+                            Hide incomplete records
+                        </label>
+                        <small class="text-muted d-block">Excludes records missing requests/limits</small>
+                    </div>
                 </div>
             </div>
         </div>

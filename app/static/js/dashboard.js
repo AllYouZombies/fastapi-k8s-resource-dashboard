@@ -1,4 +1,4 @@
-let cpuChart, memoryChart;
+let cpuRequestsChart, cpuLimitsChart, memoryRequestsChart, memoryLimitsChart;
 let tables = {};
 
 // Initialize tables with server-side sorting
@@ -126,39 +126,20 @@ function setupTableControls() {
 
 // Initialize Chart.js charts
 function initializeCharts() {
-    // CPU Utilization Chart
-    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
-    cpuChart = new Chart(cpuCtx, {
+    // CPU vs Requests Chart
+    const cpuRequestsCtx = document.getElementById('cpuRequestsChart').getContext('2d');
+    cpuRequestsChart = new Chart(cpuRequestsCtx, {
         type: 'line',
         data: {
             labels: [],
             datasets: [{
-                label: 'CPU Usage (cores)',
-                data: [],
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.1)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                yAxisID: 'y'
-            }, {
-                label: 'vs Requests (%)',
+                label: 'CPU vs Requests (%)',
                 data: [],
                 borderColor: 'rgba(54, 162, 235, 1)',
                 backgroundColor: 'rgba(54, 162, 235, 0.1)',
                 borderWidth: 2,
                 fill: false,
-                tension: 0.1,
-                yAxisID: 'y1'
-            }, {
-                label: 'vs Limits (%)',
-                data: [],
-                borderColor: 'rgba(255, 206, 86, 1)',
-                backgroundColor: 'rgba(255, 206, 86, 0.1)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                yAxisID: 'y1'
+                tension: 0.1
             }]
         },
         options: {
@@ -182,65 +163,31 @@ function initializeCharts() {
                     }
                 },
                 y: {
-                    type: 'linear',
                     display: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'CPU Cores'
-                    },
-                    beginAtZero: true
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
                     title: {
                         display: true,
                         text: 'Percentage (%)'
                     },
-                    beginAtZero: true,
-                    grid: {
-                        drawOnChartArea: false,
-                    },
+                    beginAtZero: true
                 }
             }
         }
     });
 
-    // Memory Utilization Chart
-    const memoryCtx = document.getElementById('memoryChart').getContext('2d');
-    memoryChart = new Chart(memoryCtx, {
+    // CPU vs Limits Chart
+    const cpuLimitsCtx = document.getElementById('cpuLimitsChart').getContext('2d');
+    cpuLimitsChart = new Chart(cpuLimitsCtx, {
         type: 'line',
         data: {
             labels: [],
             datasets: [{
-                label: 'Memory Usage (GB)',
+                label: 'CPU vs Limits (%)',
                 data: [],
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                borderColor: 'rgba(255, 206, 86, 1)',
+                backgroundColor: 'rgba(255, 206, 86, 0.1)',
                 borderWidth: 2,
                 fill: false,
-                tension: 0.1,
-                yAxisID: 'y'
-            }, {
-                label: 'vs Requests (%)',
-                data: [],
-                borderColor: 'rgba(153, 102, 255, 1)',
-                backgroundColor: 'rgba(153, 102, 255, 0.1)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                yAxisID: 'y1'
-            }, {
-                label: 'vs Limits (%)',
-                data: [],
-                borderColor: 'rgba(255, 159, 64, 1)',
-                backgroundColor: 'rgba(255, 159, 64, 0.1)',
-                borderWidth: 2,
-                fill: false,
-                tension: 0.1,
-                yAxisID: 'y1'
+                tension: 0.1
             }]
         },
         options: {
@@ -264,27 +211,108 @@ function initializeCharts() {
                     }
                 },
                 y: {
-                    type: 'linear',
                     display: true,
-                    position: 'left',
-                    title: {
-                        display: true,
-                        text: 'Memory (GB)'
-                    },
-                    beginAtZero: true
-                },
-                y1: {
-                    type: 'linear',
-                    display: true,
-                    position: 'right',
                     title: {
                         display: true,
                         text: 'Percentage (%)'
                     },
-                    beginAtZero: true,
-                    grid: {
-                        drawOnChartArea: false,
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Memory vs Requests Chart
+    const memoryRequestsCtx = document.getElementById('memoryRequestsChart').getContext('2d');
+    memoryRequestsChart = new Chart(memoryRequestsCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Memory vs Requests (%)',
+                data: [],
+                borderColor: 'rgba(153, 102, 255, 1)',
+                backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Time'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
                     },
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Memory vs Limits Chart
+    const memoryLimitsCtx = document.getElementById('memoryLimitsChart').getContext('2d');
+    memoryLimitsChart = new Chart(memoryLimitsCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Memory vs Limits (%)',
+                data: [],
+                borderColor: 'rgba(255, 159, 64, 1)',
+                backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Time'
+                    }
+                },
+                y: {
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    },
+                    beginAtZero: true
                 }
             }
         }
@@ -302,19 +330,25 @@ async function loadChartData() {
 
         const data = await response.json();
 
-        // Update CPU chart
-        cpuChart.data.labels = data.timestamps;
-        cpuChart.data.datasets[0].data = data.cpu_usage_absolute;
-        cpuChart.data.datasets[1].data = data.cpu_usage_percentage_requests;
-        cpuChart.data.datasets[2].data = data.cpu_usage_percentage_limits;
-        cpuChart.update('none');
+        // Update CPU vs Requests chart
+        cpuRequestsChart.data.labels = data.timestamps;
+        cpuRequestsChart.data.datasets[0].data = data.cpu_usage_percentage_requests;
+        cpuRequestsChart.update('none');
 
-        // Update Memory chart
-        memoryChart.data.labels = data.timestamps;
-        memoryChart.data.datasets[0].data = data.memory_usage_absolute;
-        memoryChart.data.datasets[1].data = data.memory_usage_percentage_requests;
-        memoryChart.data.datasets[2].data = data.memory_usage_percentage_limits;
-        memoryChart.update('none');
+        // Update CPU vs Limits chart
+        cpuLimitsChart.data.labels = data.timestamps;
+        cpuLimitsChart.data.datasets[0].data = data.cpu_usage_percentage_limits;
+        cpuLimitsChart.update('none');
+
+        // Update Memory vs Requests chart
+        memoryRequestsChart.data.labels = data.timestamps;
+        memoryRequestsChart.data.datasets[0].data = data.memory_usage_percentage_requests;
+        memoryRequestsChart.update('none');
+
+        // Update Memory vs Limits chart
+        memoryLimitsChart.data.labels = data.timestamps;
+        memoryLimitsChart.data.datasets[0].data = data.memory_usage_percentage_limits;
+        memoryLimitsChart.update('none');
 
     } catch (error) {
         console.error('Error loading chart data:', error);

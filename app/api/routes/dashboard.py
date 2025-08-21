@@ -22,7 +22,7 @@ async def dashboard_home(
     namespace: Optional[str] = Query(None),
     sort_column: Optional[str] = Query(None),
     sort_direction: Optional[str] = Query("asc"),
-    hide_incomplete: Optional[bool] = Query(False),
+    hide_incomplete: Optional[bool] = Query(True),
     db: Session = Depends(get_database_session),
 ):
     """Main dashboard page."""
