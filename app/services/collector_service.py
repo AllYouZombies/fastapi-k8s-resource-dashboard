@@ -1,6 +1,5 @@
 import asyncio
 from datetime import datetime, timedelta
-from sqlalchemy.orm import Session
 from typing import List, Dict
 from ..models.database import ResourceMetric, ResourceSummary
 from ..core.database import SessionLocal
@@ -101,13 +100,20 @@ class ResourceCollectorService:
         try:
             # Delete old metrics in batches to avoid locks
             while True:
-                deleted = db.query(ResourceMetric) \
-                    .filter(ResourceMetric.timestamp < cutoff_time) \
-                    .limit(1000) \
-                    .delete(synchronize_session=False)
+                # Get IDs of records to delete
+                ids_to_delete = [
+                    row.id for row in db.query(ResourceMetric.id)
+                    .filter(ResourceMetric.timestamp < cutoff_time)
+                    .limit(1000)
+                ]
 
-                if deleted == 0:
+                if not ids_to_delete:
                     break
+
+                # Delete by IDs
+                db.query(ResourceMetric) \
+                    .filter(ResourceMetric.id.in_(ids_to_delete)) \
+                    .delete(synchronize_session=False)
 
                 db.commit()
                 await asyncio.sleep(0.1)  # Brief pause

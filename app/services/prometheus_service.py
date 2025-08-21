@@ -1,7 +1,8 @@
 import aiohttp
 import asyncio
+import ssl
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from ..core.config import get_settings
 import logging
 
@@ -14,9 +15,12 @@ class PrometheusService:
         self.session = None
 
     async def __aenter__(self):
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
         self.session = aiohttp.ClientSession(
             timeout=aiohttp.ClientTimeout(total=self.settings.prometheus_timeout),
-            connector=aiohttp.TCPConnector(limit=10)
+            connector=aiohttp.TCPConnector(limit=10, ssl=ssl_context)
         )
         return self
 
