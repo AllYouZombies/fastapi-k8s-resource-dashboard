@@ -159,6 +159,54 @@
         display: none;
     }
 }
+
+/* Unified pagination styling to match filter container */
+.pagination {
+    margin-top: 20px;
+}
+
+.pagination .page-link {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin: 0 3px;
+    font-weight: 500;
+    color: #495057;
+    background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.pagination .page-link:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    background: linear-gradient(45deg, #ffffff 0%, #f8f9fa 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.pagination .page-item.active .page-link {
+    color: #ffffff;
+    background: linear-gradient(45deg, #0d6efd 0%, #0056b3 100%);
+    border-color: #0d6efd;
+    box-shadow: 0 3px 8px rgba(13, 110, 253, 0.3);
+}
+
+/* Unified button styling for refresh and action buttons */
+.btn-success {
+    border: 2px solid #198754;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 8px 15px;
+    background: linear-gradient(45deg, #28a745 0%, #1e7e34 100%);
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
+    background: linear-gradient(45deg, #34ce57 0%, #28a745 100%);
+}
 </style>
 {% endblock %}
 
@@ -380,8 +428,8 @@
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_request_cores">CPU Requested (m) {% if sort_column == 'cpu_request_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="cpu_usage_cores">CPU Actual (m) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="cpu_usage_cores">CPU Actual (current/max) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="utilization_pct">Utilization % (current/max) {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Recommendations</th>
                                 </tr>
                             </thead>
@@ -432,8 +480,8 @@
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_limit_cores">CPU Limit (m) {% if sort_column == 'cpu_limit_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="cpu_usage_cores">CPU Actual (m) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="cpu_usage_cores">CPU Actual (current/max) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="utilization_pct">Utilization % (current/max) {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Recommendations</th>
                                 </tr>
                             </thead>
@@ -484,8 +532,8 @@
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_request_bytes">Memory Requested {% if sort_column == 'memory_request_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="memory_usage_bytes">Memory Actual {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_usage_bytes">Memory Actual (current/max) {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="utilization_pct">Utilization % (current/max) {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Recommendations</th>
                                 </tr>
                             </thead>
@@ -536,8 +584,8 @@
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_limit_bytes">Memory Limit {% if sort_column == 'memory_limit_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="memory_usage_bytes">Memory Actual {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_usage_bytes">Memory Actual (current/max) {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="utilization_pct">Utilization % (current/max) {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Recommendations</th>
                                 </tr>
                             </thead>
