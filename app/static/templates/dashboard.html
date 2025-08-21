@@ -332,9 +332,8 @@
                     <div class="form-check">
                         <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
                         <label class="form-check-label" for="hideIncompleteData">
-                            Hide incomplete records
+                            Exclude records with no requests/limits
                         </label>
-                        <small class="text-muted d-block">Excludes records missing requests/limits</small>
                     </div>
                 </div>
             </div>
@@ -675,6 +674,15 @@
                         </div>
                     </div>
                     
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-code"></i> YAML Configuration</h6>
+                        </div>
+                        <div class="card-body">
+                            <pre id="yaml-config" class="bg-light p-3" style="border-radius: 5px; font-size: 0.9rem;"></pre>
+                        </div>
+                    </div>
+                    
                     <div class="alert alert-info mt-3">
                         <i class="fas fa-info-circle"></i>
                         <strong>Recommendation Logic:</strong>
@@ -684,15 +692,6 @@
                             <li>Historical data shows min/current/max values to provide full context</li>
                             <li>All values consider the entire pod lifecycle for accurate resource planning</li>
                         </ul>
-                    </div>
-                    
-                    <div class="card mt-3">
-                        <div class="card-header">
-                            <h6 class="mb-0"><i class="fas fa-code"></i> YAML Configuration</h6>
-                        </div>
-                        <div class="card-body">
-                            <pre id="yaml-config" class="bg-light p-3" style="border-radius: 5px; font-size: 0.9rem;"></pre>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

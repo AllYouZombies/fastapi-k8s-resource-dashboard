@@ -425,17 +425,6 @@ async def get_chart_data(
         time_key = metric.timestamp.replace(minute=minute, second=0, microsecond=0)
         time_groups[time_key].append(metric)
 
-    # Calculate totals for percentage calculations
-    if recent_metrics:
-        latest_timestamp = max(m.timestamp for m in recent_metrics)
-        latest_metrics = [m for m in recent_metrics if m.timestamp == latest_timestamp]
-        total_cpu_requests = sum(m.cpu_request_cores or 0 for m in latest_metrics)
-        total_cpu_limits = sum(m.cpu_limit_cores or 0 for m in latest_metrics)
-        total_memory_requests = sum(m.memory_request_bytes or 0 for m in latest_metrics)
-        total_memory_limits = sum(m.memory_limit_bytes or 0 for m in latest_metrics)
-    else:
-        total_cpu_requests = total_cpu_limits = total_memory_requests = total_memory_limits = 1
-
     timestamps = []
     cpu_usage_absolute = []
     cpu_usage_percentage_requests = []
@@ -446,20 +435,26 @@ async def get_chart_data(
 
     for time_key in sorted(time_groups.keys()):
         metrics = time_groups[time_key]
-        total_cpu = sum(m.cpu_usage_cores or 0 for m in metrics)
-        total_memory = sum(m.memory_usage_bytes or 0 for m in metrics)
+        total_cpu_usage = sum(m.cpu_usage_cores or 0 for m in metrics)
+        total_memory_usage = sum(m.memory_usage_bytes or 0 for m in metrics)
         
-        # Calculate percentages
-        cpu_pct_requests = (total_cpu / total_cpu_requests * 100) if total_cpu_requests else 0
-        cpu_pct_limits = (total_cpu / total_cpu_limits * 100) if total_cpu_limits else 0
-        memory_pct_requests = (total_memory / total_memory_requests * 100) if total_memory_requests else 0
-        memory_pct_limits = (total_memory / total_memory_limits * 100) if total_memory_limits else 0
+        # Calculate totals for this timestamp (use actual historical values)
+        total_cpu_requests = sum(m.cpu_request_cores or 0 for m in metrics)
+        total_cpu_limits = sum(m.cpu_limit_cores or 0 for m in metrics)
+        total_memory_requests = sum(m.memory_request_bytes or 0 for m in metrics)
+        total_memory_limits = sum(m.memory_limit_bytes or 0 for m in metrics)
+        
+        # Calculate percentages based on historical requests/limits at this point in time
+        cpu_pct_requests = (total_cpu_usage / total_cpu_requests * 100) if total_cpu_requests > 0 else 0
+        cpu_pct_limits = (total_cpu_usage / total_cpu_limits * 100) if total_cpu_limits > 0 else 0
+        memory_pct_requests = (total_memory_usage / total_memory_requests * 100) if total_memory_requests > 0 else 0
+        memory_pct_limits = (total_memory_usage / total_memory_limits * 100) if total_memory_limits > 0 else 0
 
         timestamps.append(time_key.strftime("%H:%M"))
-        cpu_usage_absolute.append(round(total_cpu, 3))
+        cpu_usage_absolute.append(round(total_cpu_usage, 3))
         cpu_usage_percentage_requests.append(round(cpu_pct_requests, 1))
         cpu_usage_percentage_limits.append(round(cpu_pct_limits, 1))
-        memory_usage_absolute.append(round(total_memory / (1024**3), 2))  # GB
+        memory_usage_absolute.append(round(total_memory_usage / (1024**3), 2))  # GB
         memory_usage_percentage_requests.append(round(memory_pct_requests, 1))
         memory_usage_percentage_limits.append(round(memory_pct_limits, 1))
 
