@@ -8,8 +8,12 @@ from sqlalchemy.orm import Session
 from ...core.config import Settings
 from ...core.dependencies import get_database_session, get_settings_dependency
 from ...models.database import ResourceMetric, ResourceSummary
-from ...models.schemas import (ChartDataResponse, MetricsResponse,
-                               ResourceMetricResponse, ResourceSummaryResponse)
+from ...models.schemas import (
+    ChartDataResponse,
+    MetricsResponse,
+    ResourceMetricResponse,
+    ResourceSummaryResponse,
+)
 
 router = APIRouter()
 
@@ -24,12 +28,14 @@ async def get_metrics(
 ):
     """Get paginated resource metrics with optional filtering"""
     settings = get_settings_dependency()
-    
+
     # Build base query for latest metrics - exclude excluded namespaces
     query = db.query(ResourceMetric).filter(
         ResourceMetric.timestamp
         == db.query(func.max(ResourceMetric.timestamp)).scalar(),
-        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
+        ~ResourceMetric.namespace.in_(
+            settings.excluded_namespaces_list
+        ),  # Exclude excluded namespaces
     )
 
     # Apply filters
@@ -67,11 +73,13 @@ async def get_chart_data(
 ):
     """Get chart data for the last N hours"""
     settings = get_settings_dependency()
-    
+
     # Get recent metrics for charts - exclude excluded namespaces
     recent_metrics = (
         db.query(ResourceMetric)
-        .filter(~ResourceMetric.namespace.in_(settings.excluded_namespaces_list))  # Exclude excluded namespaces
+        .filter(
+            ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)
+        )  # Exclude excluded namespaces
         .order_by(desc(ResourceMetric.timestamp))
         .limit(hours * 12)
         .all()
@@ -118,10 +126,17 @@ async def get_chart_data(
 async def get_namespaces(db: Session = Depends(get_database_session)) -> List[str]:
     """Get all available namespaces (excluding excluded namespaces)"""
     settings = get_settings_dependency()
-    
-    namespaces = db.query(ResourceMetric.namespace).filter(
-        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
-    ).distinct().all()
+
+    namespaces = (
+        db.query(ResourceMetric.namespace)
+        .filter(
+            ~ResourceMetric.namespace.in_(
+                settings.excluded_namespaces_list
+            )  # Exclude excluded namespaces
+        )
+        .distinct()
+        .all()
+    )
     return [ns[0] for ns in namespaces if ns[0]]
 
 

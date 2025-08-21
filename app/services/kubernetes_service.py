@@ -24,13 +24,17 @@ class KubernetesService:
             else:
                 await config.load_kube_config(
                     config_file=self.settings.k8s_config_path,
-                    context=self.settings.k8s_context
+                    context=self.settings.k8s_context,
                 )
 
             self.api_client = client.ApiClient()
             self.v1 = client.CoreV1Api(self.api_client)
-            
-            context_info = f" (context: {self.settings.k8s_context})" if self.settings.k8s_context else ""
+
+            context_info = (
+                f" (context: {self.settings.k8s_context})"
+                if self.settings.k8s_context
+                else ""
+            )
             logger.info(f"Kubernetes client initialized successfully{context_info}")
 
         except Exception as e:

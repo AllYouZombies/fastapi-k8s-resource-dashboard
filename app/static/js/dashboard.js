@@ -1,6 +1,20 @@
 let cpuRequestsChart, cpuLimitsChart, memoryRequestsChart, memoryLimitsChart;
 let tables = {};
 
+// Show error message in chart container
+function showChartError(canvasId, errorMessage) {
+    const canvas = document.getElementById(canvasId);
+    if (canvas) {
+        const container = canvas.parentElement;
+        container.innerHTML = `
+            <div class="alert alert-warning text-center">
+                <i class="fas fa-exclamation-triangle"></i> 
+                Chart Error: ${errorMessage}
+            </div>
+        `;
+    }
+}
+
 // Initialize tables with server-side sorting
 function initializeTables() {
     const tableConfigs = {
@@ -129,11 +143,30 @@ function initializeCharts() {
     // Check if Chart.js is loaded
     if (typeof Chart === 'undefined') {
         console.error('Chart.js is not loaded');
+        // Show error message in chart containers
+        showChartError('cpuRequestsChart', 'Chart.js not loaded');
+        showChartError('cpuLimitsChart', 'Chart.js not loaded');
+        showChartError('memoryRequestsChart', 'Chart.js not loaded');
+        showChartError('memoryLimitsChart', 'Chart.js not loaded');
         return;
     }
     
-    // CPU vs Requests Chart
-    const cpuRequestsCtx = document.getElementById('cpuRequestsChart').getContext('2d');
+    // Check if canvas elements exist
+    const canvasElements = [
+        'cpuRequestsChart', 'cpuLimitsChart', 'memoryRequestsChart', 'memoryLimitsChart'
+    ];
+    
+    for (const canvasId of canvasElements) {
+        const element = document.getElementById(canvasId);
+        if (!element) {
+            console.error(`Canvas element ${canvasId} not found`);
+            return;
+        }
+    }
+    
+    try {
+        // CPU vs Requests Chart
+        const cpuRequestsCtx = document.getElementById('cpuRequestsChart').getContext('2d');
     cpuRequestsChart = new Chart(cpuRequestsCtx, {
         type: 'line',
         data: {
@@ -324,8 +357,15 @@ function initializeCharts() {
         }
     });
 
-    // Load initial chart data
-    loadChartData();
+        // Load initial chart data
+        loadChartData();
+    } catch (error) {
+        console.error('Failed to initialize charts:', error);
+        showChartError('cpuRequestsChart', `Initialization failed: ${error.message}`);
+        showChartError('cpuLimitsChart', `Initialization failed: ${error.message}`);
+        showChartError('memoryRequestsChart', `Initialization failed: ${error.message}`);
+        showChartError('memoryLimitsChart', `Initialization failed: ${error.message}`);
+    }
 }
 
 // Load and update chart data
@@ -605,17 +645,14 @@ async function showRecommendations(podName, containerName, namespace) {
         // Update modal with actual data
         document.getElementById('modal-type').textContent = 'Resource Recommendations';
         
-        // Current usage - show both CPU and Memory with historical context
+        // Current usage - show both CPU and Memory with historical context (current/max)
         const cpuCurrentMi = data.current_usage.cpu_millicores;
         const memoryCurrentMi = data.current_usage.memory_mi;
-        const cpuMinMi = Math.round(data.historical_stats.cpu.min * 1000);
         const cpuMaxMi = Math.round(data.historical_stats.cpu.max * 1000);
-        const memoryMinMi = Math.round(data.historical_stats.memory.min / (1024 * 1024));
         const memoryMaxMi = Math.round(data.historical_stats.memory.max / (1024 * 1024));
         
         document.getElementById('current-cpu').innerHTML = `
             <span class="value-range">
-                <span class="min-max">${cpuMinMi}m</span>
                 <span class="current">${cpuCurrentMi}m</span>
                 <span class="min-max">${cpuMaxMi}m</span>
             </span>
@@ -623,7 +660,6 @@ async function showRecommendations(podName, containerName, namespace) {
         
         document.getElementById('current-memory').innerHTML = `
             <span class="value-range">
-                <span class="min-max">${memoryMinMi}Mi</span>
                 <span class="current">${memoryCurrentMi}Mi</span>
                 <span class="min-max">${memoryMaxMi}Mi</span>
             </span>
