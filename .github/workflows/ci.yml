@@ -62,7 +62,7 @@ jobs:
     
     - name: Build Docker image
       run: |
-        docker build -t k8s-resource-monitor:test .
+        docker build -f docker/Dockerfile -t k8s-resource-monitor:test .
         
     - name: Test Docker image
       run: |

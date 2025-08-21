@@ -225,39 +225,37 @@
 
     <!-- Summary Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-6">
             <div class="card text-white bg-primary">
                 <div class="card-body">
-                    <h5 class="card-title">CPU Requests</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_requests) }}</h3>
-                    <small>cores total</small>
+                    <h5 class="card-title">CPU Resources</h5>
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_requests) }}</h3>
+                            <small>Requests (cores)</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_limits) }}</h3>
+                            <small>Limits (cores)</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-info">
-                <div class="card-body">
-                    <h5 class="card-title">CPU Limits</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_limits) }}</h3>
-                    <small>cores total</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
+        <div class="col-md-6">
             <div class="card text-white bg-success">
                 <div class="card-body">
-                    <h5 class="card-title">Memory Requests</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_requests_gb) }}</h3>
-                    <small>GB total</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-warning">
-                <div class="card-body">
-                    <h5 class="card-title">Memory Limits</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_limits_gb) }}</h3>
-                    <small>GB total</small>
+                    <h5 class="card-title">Memory Resources</h5>
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_requests_gb) }}</h3>
+                            <small>Requests (GB)</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_limits_gb) }}</h3>
+                            <small>Limits (GB)</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -265,39 +263,37 @@
 
     <!-- Usage and Underutilization Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-6">
             <div class="card text-white bg-dark">
                 <div class="card-body">
-                    <h5 class="card-title">CPU Usage</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_usage) }}</h3>
-                    <small>cores actual</small>
+                    <h5 class="card-title">Actual Usage</h5>
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_usage) }}</h3>
+                            <small>CPU (cores)</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_usage_gb) }}</h3>
+                            <small>Memory (GB)</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-secondary">
-                <div class="card-body">
-                    <h5 class="card-title">Memory Usage</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_usage_gb) }}</h3>
-                    <small>GB actual</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
+        <div class="col-md-6">
             <div class="card text-white bg-danger">
                 <div class="card-body">
-                    <h5 class="card-title">CPU Underutilization</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.cpu_requests_underutilization) }}</h3>
-                    <small>cores wasted (requests)</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-danger">
-                <div class="card-body">
-                    <h5 class="card-title">Memory Underutilization</h5>
-                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.memory_requests_underutilization_gb) }}</h3>
-                    <small>GB wasted (requests)</small>
+                    <h5 class="card-title">Wasted Resources</h5>
+                    <div class="row">
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.cpu_requests_underutilization) }}</h3>
+                            <small>CPU (cores)</small>
+                        </div>
+                        <div class="col-6 text-center">
+                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.memory_requests_underutilization_gb) }}</h3>
+                            <small>Memory (GB)</small>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
