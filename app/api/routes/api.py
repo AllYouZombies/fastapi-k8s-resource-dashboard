@@ -6,8 +6,12 @@ from sqlalchemy.orm import Session
 
 from ...core.dependencies import get_database_session, get_settings_dependency
 from ...models.database import ResourceMetric, ResourceSummary
-from ...models.schemas import (ChartDataResponse, MetricsResponse,
-                               ResourceMetricResponse, ResourceSummaryResponse)
+from ...models.schemas import (
+    ChartDataResponse,
+    MetricsResponse,
+    ResourceMetricResponse,
+    ResourceSummaryResponse,
+)
 
 router = APIRouter()
 
