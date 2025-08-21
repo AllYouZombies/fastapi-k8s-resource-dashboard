@@ -24,7 +24,7 @@ apscheduler==3.10.4
 jinja2==3.1.2
 
 # Static file serving
-python-multipart==0.0.6
+python-multipart==0.0.18
 
 # Logging and utilities
 python-json-logger==2.0.7
