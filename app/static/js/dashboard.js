@@ -33,20 +33,21 @@ function addSortingHandlers(tableId) {
             header.style.cursor = 'pointer';
             
             header.addEventListener('click', () => {
-                const url = new URL(window.location);
-                const currentSort = url.searchParams.get('sort_column');
-                const currentDirection = url.searchParams.get('sort_direction') || 'asc';
+                const currentSort = new URLSearchParams(window.location.search).get('sort_column');
+                const currentDirection = new URLSearchParams(window.location.search).get('sort_direction') || 'asc';
                 
                 let newDirection = 'asc';
                 if (currentSort === column && currentDirection === 'asc') {
                     newDirection = 'desc';
                 }
                 
-                url.searchParams.set('sort_column', column);
-                url.searchParams.set('sort_direction', newDirection);
-                url.searchParams.set('page', '1'); // Reset to first page
+                // Build URL for dashboard with proper parameters
+                const params = new URLSearchParams(window.location.search);
+                params.set('sort_column', column);
+                params.set('sort_direction', newDirection);
+                params.set('page', '1'); // Reset to first page
                 
-                window.location.href = url.toString();
+                window.location.href = '/dashboard?' + params.toString();
             });
         }
     });
@@ -59,28 +60,28 @@ function setupTableControls() {
         const searchTerm = this.value;
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-            const url = new URL(window.location);
+            const params = new URLSearchParams(window.location.search);
             if (searchTerm) {
-                url.searchParams.set('search', searchTerm);
+                params.set('search', searchTerm);
             } else {
-                url.searchParams.delete('search');
+                params.delete('search');
             }
-            url.searchParams.set('page', '1');
-            window.location.href = url.toString();
+            params.set('page', '1');
+            window.location.href = '/dashboard?' + params.toString();
         }, 500);
     });
 
     // Namespace filter
     $('#namespaceFilter').on('change', function() {
         const selectedNamespace = this.value;
-        const url = new URL(window.location);
+        const params = new URLSearchParams(window.location.search);
         if (selectedNamespace === 'all') {
-            url.searchParams.delete('namespace');
+            params.delete('namespace');
         } else {
-            url.searchParams.set('namespace', selectedNamespace);
+            params.set('namespace', selectedNamespace);
         }
-        url.searchParams.set('page', '1');
-        window.location.href = url.toString();
+        params.set('page', '1');
+        window.location.href = '/dashboard?' + params.toString();
     });
 }
 
@@ -98,8 +99,27 @@ function initializeCharts() {
                 borderColor: 'rgba(255, 99, 132, 1)',
                 backgroundColor: 'rgba(255, 99, 132, 0.1)',
                 borderWidth: 2,
-                fill: true,
-                tension: 0.1
+                fill: false,
+                tension: 0.1,
+                yAxisID: 'y'
+            }, {
+                label: 'CPU Usage vs Requests (%)',
+                data: [],
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                yAxisID: 'y1'
+            }, {
+                label: 'CPU Usage vs Limits (%)',
+                data: [],
+                borderColor: 'rgba(255, 206, 86, 1)',
+                backgroundColor: 'rgba(255, 206, 86, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                yAxisID: 'y1'
             }]
         },
         options: {
@@ -123,12 +143,28 @@ function initializeCharts() {
                     }
                 },
                 y: {
+                    type: 'linear',
                     display: true,
+                    position: 'left',
                     title: {
                         display: true,
                         text: 'CPU Cores'
                     },
                     beginAtZero: true
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    },
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        drawOnChartArea: false,
+                    },
                 }
             }
         }
@@ -141,13 +177,32 @@ function initializeCharts() {
         data: {
             labels: [],
             datasets: [{
-                label: 'Memory Usage (MB)',
+                label: 'Memory Usage (GB)',
                 data: [],
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.1)',
                 borderWidth: 2,
-                fill: true,
-                tension: 0.1
+                fill: false,
+                tension: 0.1,
+                yAxisID: 'y'
+            }, {
+                label: 'Memory Usage vs Requests (%)',
+                data: [],
+                borderColor: 'rgba(153, 102, 255, 1)',
+                backgroundColor: 'rgba(153, 102, 255, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                yAxisID: 'y1'
+            }, {
+                label: 'Memory Usage vs Limits (%)',
+                data: [],
+                borderColor: 'rgba(255, 159, 64, 1)',
+                backgroundColor: 'rgba(255, 159, 64, 0.1)',
+                borderWidth: 2,
+                fill: false,
+                tension: 0.1,
+                yAxisID: 'y1'
             }]
         },
         options: {
@@ -171,12 +226,28 @@ function initializeCharts() {
                     }
                 },
                 y: {
+                    type: 'linear',
                     display: true,
+                    position: 'left',
                     title: {
                         display: true,
-                        text: 'Memory (MB)'
+                        text: 'Memory (GB)'
                     },
                     beginAtZero: true
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Percentage (%)'
+                    },
+                    beginAtZero: true,
+                    max: 100,
+                    grid: {
+                        drawOnChartArea: false,
+                    },
                 }
             }
         }
@@ -189,19 +260,23 @@ function initializeCharts() {
 // Load and update chart data
 async function loadChartData() {
     try {
-        const response = await fetch('/api/chart-data');
+        const response = await fetch('/api/chart-data?hours=24');
         if (!response.ok) throw new Error('Failed to fetch chart data');
 
         const data = await response.json();
 
         // Update CPU chart
         cpuChart.data.labels = data.timestamps;
-        cpuChart.data.datasets[0].data = data.cpu_utilization;
+        cpuChart.data.datasets[0].data = data.cpu_usage_absolute;
+        cpuChart.data.datasets[1].data = data.cpu_usage_percentage_requests;
+        cpuChart.data.datasets[2].data = data.cpu_usage_percentage_limits;
         cpuChart.update('none');
 
         // Update Memory chart
         memoryChart.data.labels = data.timestamps;
-        memoryChart.data.datasets[0].data = data.memory_utilization;
+        memoryChart.data.datasets[0].data = data.memory_usage_absolute;
+        memoryChart.data.datasets[1].data = data.memory_usage_percentage_requests;
+        memoryChart.data.datasets[2].data = data.memory_usage_percentage_limits;
         memoryChart.update('none');
 
     } catch (error) {

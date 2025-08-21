@@ -236,38 +236,187 @@ async def dashboard_home(
     )
 
 
+@router.get("/api/summary")
+async def get_summary_stats(
+        search: Optional[str] = Query(None),
+        namespace: Optional[str] = Query(None),
+        db: Session = Depends(get_database_session)
+):
+    """API endpoint for summary statistics."""
+    # Get filtered data for summary stats
+    all_query = db.query(ResourceMetric).filter(
+        ResourceMetric.timestamp == db.query(func.max(ResourceMetric.timestamp)).scalar()
+    )
+    if search:
+        all_query = all_query.filter(ResourceMetric.pod_name.contains(search))
+    if namespace:
+        all_query = all_query.filter(ResourceMetric.namespace == namespace)
+    
+    all_resources = all_query.all()
+    
+    total_cpu_requests = sum(r.cpu_request_cores or 0 for r in all_resources)
+    total_cpu_limits = sum(r.cpu_limit_cores or 0 for r in all_resources)
+    total_memory_requests = sum(r.memory_request_bytes or 0 for r in all_resources)
+    total_memory_limits = sum(r.memory_limit_bytes or 0 for r in all_resources)
+    total_cpu_usage = sum(r.cpu_usage_cores or 0 for r in all_resources)
+    total_memory_usage = sum(r.memory_usage_bytes or 0 for r in all_resources)
+    
+    cpu_requests_underutilization = max(0, total_cpu_requests - total_cpu_usage)
+    cpu_limits_underutilization = max(0, total_cpu_limits - total_cpu_usage)
+    memory_requests_underutilization = max(0, total_memory_requests - total_memory_usage)
+    memory_limits_underutilization = max(0, total_memory_limits - total_memory_usage)
+    
+    return {
+        "total_cpu_requests": total_cpu_requests,
+        "total_cpu_limits": total_cpu_limits,
+        "total_memory_requests_gb": total_memory_requests / (1024**3),
+        "total_memory_limits_gb": total_memory_limits / (1024**3),
+        "total_cpu_usage": total_cpu_usage,
+        "total_memory_usage_gb": total_memory_usage / (1024**3),
+        "cpu_requests_underutilization": cpu_requests_underutilization,
+        "cpu_limits_underutilization": cpu_limits_underutilization,
+        "memory_requests_underutilization_gb": memory_requests_underutilization / (1024**3),
+        "memory_limits_underutilization_gb": memory_limits_underutilization / (1024**3),
+        "total_containers": len(all_resources)
+    }
+
+
 @router.get("/api/chart-data")
-async def get_chart_data(db: Session = Depends(get_database_session)):
-    """API endpoint for chart data."""
-    # Get recent metrics for charts
+async def get_chart_data(
+        hours: int = Query(24, ge=1, le=168),  # Max 1 week
+        db: Session = Depends(get_database_session)
+):
+    """API endpoint for chart data with historical data."""
+    from collections import defaultdict
+    from datetime import datetime, timedelta
+    
+    # Get metrics from the last N hours
+    cutoff_time = datetime.utcnow() - timedelta(hours=hours)
     recent_metrics = (
         db.query(ResourceMetric)
-        .order_by(desc(ResourceMetric.timestamp))
-        .limit(100)
+        .filter(ResourceMetric.timestamp >= cutoff_time)
+        .order_by(ResourceMetric.timestamp)
         .all()
     )
 
-    # Aggregate data for charts
-    chart_data = {"cpu_utilization": [], "memory_utilization": [], "timestamps": []}
-
-    # Group by timestamp and calculate averages
-    from collections import defaultdict
-
+    # Group by timestamp (5-minute intervals)
     time_groups = defaultdict(list)
-
+    
     for metric in recent_metrics:
-        time_key = metric.timestamp.strftime("%H:%M")
+        # Round to 5-minute intervals
+        minute = (metric.timestamp.minute // 5) * 5
+        time_key = metric.timestamp.replace(minute=minute, second=0, microsecond=0)
         time_groups[time_key].append(metric)
+
+    # Calculate totals for percentage calculations
+    if recent_metrics:
+        latest_timestamp = max(m.timestamp for m in recent_metrics)
+        latest_metrics = [m for m in recent_metrics if m.timestamp == latest_timestamp]
+        total_cpu_requests = sum(m.cpu_request_cores or 0 for m in latest_metrics)
+        total_cpu_limits = sum(m.cpu_limit_cores or 0 for m in latest_metrics)
+        total_memory_requests = sum(m.memory_request_bytes or 0 for m in latest_metrics)
+        total_memory_limits = sum(m.memory_limit_bytes or 0 for m in latest_metrics)
+    else:
+        total_cpu_requests = total_cpu_limits = total_memory_requests = total_memory_limits = 1
+
+    timestamps = []
+    cpu_usage_absolute = []
+    cpu_usage_percentage_requests = []
+    cpu_usage_percentage_limits = []
+    memory_usage_absolute = []
+    memory_usage_percentage_requests = []
+    memory_usage_percentage_limits = []
 
     for time_key in sorted(time_groups.keys()):
         metrics = time_groups[time_key]
-        avg_cpu = sum(m.cpu_usage_cores or 0 for m in metrics) / len(metrics)
-        avg_memory = (
-            sum(m.memory_usage_bytes or 0 for m in metrics) / len(metrics) / (1024**2)
-        )  # Convert to MB
+        total_cpu = sum(m.cpu_usage_cores or 0 for m in metrics)
+        total_memory = sum(m.memory_usage_bytes or 0 for m in metrics)
+        
+        # Calculate percentages
+        cpu_pct_requests = (total_cpu / total_cpu_requests * 100) if total_cpu_requests else 0
+        cpu_pct_limits = (total_cpu / total_cpu_limits * 100) if total_cpu_limits else 0
+        memory_pct_requests = (total_memory / total_memory_requests * 100) if total_memory_requests else 0
+        memory_pct_limits = (total_memory / total_memory_limits * 100) if total_memory_limits else 0
 
-        chart_data["timestamps"].append(time_key)
-        chart_data["cpu_utilization"].append(round(avg_cpu, 3))
-        chart_data["memory_utilization"].append(round(avg_memory, 1))
+        timestamps.append(time_key.strftime("%H:%M"))
+        cpu_usage_absolute.append(round(total_cpu, 3))
+        cpu_usage_percentage_requests.append(round(cpu_pct_requests, 1))
+        cpu_usage_percentage_limits.append(round(cpu_pct_limits, 1))
+        memory_usage_absolute.append(round(total_memory / (1024**3), 2))  # GB
+        memory_usage_percentage_requests.append(round(memory_pct_requests, 1))
+        memory_usage_percentage_limits.append(round(memory_pct_limits, 1))
 
-    return chart_data
+    return {
+        "timestamps": timestamps,
+        "cpu_usage_absolute": cpu_usage_absolute,
+        "cpu_usage_percentage_requests": cpu_usage_percentage_requests,
+        "cpu_usage_percentage_limits": cpu_usage_percentage_limits,
+        "memory_usage_absolute": memory_usage_absolute,
+        "memory_usage_percentage_requests": memory_usage_percentage_requests,
+        "memory_usage_percentage_limits": memory_usage_percentage_limits,
+    }
+
+
+@router.get("/api/table/cpu-requests")
+async def get_cpu_requests_table(
+        page: int = Query(1, ge=1),
+        search: Optional[str] = Query(None),
+        namespace: Optional[str] = Query(None),
+        sort_column: Optional[str] = Query(None),
+        sort_direction: Optional[str] = Query("asc"),
+        db: Session = Depends(get_database_session)
+):
+    """API endpoint for CPU requests table data."""
+    settings = get_settings()
+    
+    # Build query
+    query = db.query(ResourceMetric).filter(
+        ResourceMetric.timestamp == db.query(func.max(ResourceMetric.timestamp)).scalar()
+    )
+
+    if search:
+        query = query.filter(ResourceMetric.pod_name.contains(search))
+    if namespace:
+        query = query.filter(ResourceMetric.namespace == namespace)
+
+    # Apply sorting
+    if sort_column and sort_direction in ["asc", "desc"]:
+        sort_attr = getattr(ResourceMetric, sort_column, None)
+        if sort_attr:
+            if sort_direction == "desc":
+                query = query.order_by(desc(sort_attr))
+            else:
+                query = query.order_by(sort_attr)
+
+    # Get total count and pagination
+    total_count = query.count()
+    total_pages = (total_count + settings.page_size - 1) // settings.page_size
+    offset = (page - 1) * settings.page_size
+    resources = query.offset(offset).limit(settings.page_size).all()
+
+    # Prepare table data
+    table_data = []
+    for resource in resources:
+        cpu_req_pct = (
+            (resource.cpu_usage_cores / resource.cpu_request_cores * 100)
+            if resource.cpu_request_cores
+            else 0
+        )
+        
+        table_data.append({
+            "pod_name": resource.pod_name,
+            "namespace": resource.namespace,
+            "container_name": resource.container_name,
+            "node_name": resource.node_name,
+            "status": resource.pod_phase,
+            "requested": f"{resource.cpu_request_cores * 1000:.0f}m" if resource.cpu_request_cores else "Not set",
+            "actual": f"{resource.cpu_usage_cores * 1000:.0f}m" if resource.cpu_usage_cores else "0m",
+            "utilization_pct": f"{cpu_req_pct:.1f}%" if cpu_req_pct else "N/A"
+        })
+
+    return {
+        "data": table_data,
+        "total_count": total_count,
+        "current_page": page,
+        "total_pages": total_pages
+    }
