@@ -351,7 +351,7 @@ async function loadChartData() {
         memoryLimitsChart.update('none');
 
     } catch (error) {
-        console.error('Error loading chart data:', error);
+        console.error('Chart data error:', error.message);
     }
 }
 
@@ -370,7 +370,7 @@ async function loadSummaryData() {
         updateSummaryCards(data);
         
     } catch (error) {
-        console.error('Error loading summary data:', error);
+        console.error('Summary data error:', error.message);
     }
 }
 
@@ -439,7 +439,7 @@ async function loadTableData() {
         });
         
     } catch (error) {
-        console.error('Error loading table data:', error);
+        console.error('Table data error:', error.message);
     }
 }
 
@@ -508,7 +508,7 @@ async function refreshData() {
         location.reload();
 
     } catch (error) {
-        console.error('Error refreshing data:', error);
+        console.error('Refresh error:', error.message);
         showErrorMessage('Failed to refresh data');
     } finally {
         hideLoadingState();
@@ -638,16 +638,16 @@ async function showRecommendations(podName, containerName, namespace) {
         document.getElementById('yaml-config').textContent = data.recommendations.yaml;
         
     } catch (error) {
-        console.error('Error loading recommendations:', error);
+        console.error('Recommendations error:', error.message);
         
         // Show error state
-        document.getElementById('modal-type').textContent = 'Error Loading Recommendations';
-        document.getElementById('current-cpu').textContent = 'Error';
-        document.getElementById('current-memory').textContent = 'Error';
-        document.getElementById('recommended-cpu-request').textContent = 'Error';
-        document.getElementById('recommended-cpu-limit').textContent = 'Error';
-        document.getElementById('recommended-memory-request').textContent = 'Error';
-        document.getElementById('recommended-memory-limit').textContent = 'Error';
+        document.getElementById('modal-type').textContent = 'Error Loading Data';
+        document.getElementById('current-cpu').textContent = 'N/A';
+        document.getElementById('current-memory').textContent = 'N/A';
+        document.getElementById('recommended-cpu-request').textContent = 'N/A';
+        document.getElementById('recommended-cpu-limit').textContent = 'N/A';
+        document.getElementById('recommended-memory-request').textContent = 'N/A';
+        document.getElementById('recommended-memory-limit').textContent = 'N/A';
         document.getElementById('yaml-config').textContent = `Error: ${error.message}`;
     }
 }

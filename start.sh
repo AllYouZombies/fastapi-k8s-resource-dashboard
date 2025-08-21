@@ -163,7 +163,6 @@ if $COMPOSE_CMD ps | grep -q "Up"; then
     echo "=================================================="
     echo -e "🌐 Веб-интерфейс: ${BLUE}http://localhost:8000${NC}"
     echo -e "📊 Dashboard: ${BLUE}http://localhost:8000/dashboard${NC}"
-    echo -e "🔧 API документация: ${BLUE}http://localhost:8000/docs${NC}"
     echo -e "❤️ Health Check: ${BLUE}http://localhost:8000/health${NC}"
     
     echo -e "\n${BLUE}Полезные команды:${NC}"

@@ -160,30 +160,54 @@ async def dashboard_home(
             min_m = int(min_val * 1000) if min_val else 0
             current_m = int(current_val * 1000) if current_val else 0
             max_m = int(max_val * 1000) if max_val else 0
+            
+            # If all values are the same, show only one value
+            if min_m == current_m == max_m:
+                display = f"{current_m}m"
+            else:
+                display = f"{min_m}m {current_m}m {max_m}m"
+                
             return {
                 "min": f"{min_m}m",
                 "current": f"{current_m}m", 
                 "max": f"{max_m}m",
-                "display": f"{min_m}m {current_m}m {max_m}m"
+                "display": display
             }
         
         def format_memory_values(min_val, current_val, max_val):
             min_mi = int(min_val / (1024 ** 2)) if min_val else 0
             current_mi = int(current_val / (1024 ** 2)) if current_val else 0
             max_mi = int(max_val / (1024 ** 2)) if max_val else 0
+            
+            # If all values are the same, show only one value
+            if min_mi == current_mi == max_mi:
+                display = f"{current_mi}Mi"
+            else:
+                display = f"{min_mi}Mi {current_mi}Mi {max_mi}Mi"
+                
             return {
                 "min": f"{min_mi}Mi",
                 "current": f"{current_mi}Mi",
                 "max": f"{max_mi}Mi", 
-                "display": f"{min_mi}Mi {current_mi}Mi {max_mi}Mi"
+                "display": display
             }
         
         def format_percentage_values(min_pct, current_pct, max_pct):
+            # Check if all values are not None
+            if all(x is not None for x in [min_pct, current_pct, max_pct]):
+                # If all values are the same, show only one value
+                if abs(min_pct - current_pct) < 0.1 and abs(current_pct - max_pct) < 0.1:
+                    display = f"{current_pct:.1f}%"
+                else:
+                    display = f"{min_pct:.1f}% {current_pct:.1f}% {max_pct:.1f}%"
+            else:
+                display = "N/A"
+                
             return {
                 "min": f"{min_pct:.1f}%" if min_pct is not None else "N/A",
                 "current": f"{current_pct:.1f}%" if current_pct is not None else "N/A",
                 "max": f"{max_pct:.1f}%" if max_pct is not None else "N/A",
-                "display": f"{min_pct:.1f}% {current_pct:.1f}% {max_pct:.1f}%" if all(x is not None for x in [min_pct, current_pct, max_pct]) else "N/A"
+                "display": display
             }
 
         # CPU requests vs usage (convert to millicores)
