@@ -1,7 +1,7 @@
 .PHONY: help start stop restart logs build clean setup dev test lint
 
 # Переменные
-COMPOSE_FILE=docker-compose.yml
+COMPOSE_FILE=compose.yml
 CONTAINER_NAME=k8s-resource-monitor
 
 # Цвета для вывода

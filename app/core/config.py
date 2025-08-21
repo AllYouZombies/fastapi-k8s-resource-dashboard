@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     prometheus_timeout: int = 30
 
     # Database settings
-    database_url: str = "sqlite:///./k8s_metrics.db"
+    database_url: str = "sqlite:///./data/k8s_metrics.db"
     retention_days: int = 7  # More reasonable default for production
 
     # Scheduler settings

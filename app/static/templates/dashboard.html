@@ -21,6 +21,15 @@
     position: relative;
     height: 300px;
 }
+
+.sortable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.sortable:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
 </style>
 {% endblock %}
 
@@ -192,14 +201,14 @@
                         <table id="cpuRequestsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>Pod Name</th>
-                                    <th>Namespace</th>
-                                    <th>Container</th>
-                                    <th>CPU Requested (m)</th>
-                                    <th>CPU Actual (m)</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="cpu_request_cores">CPU Requested (m) {% if sort_column == 'cpu_request_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="cpu_usage_cores">CPU Actual (m) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Utilization %</th>
-                                    <th>Status</th>
-                                    <th>Node</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -230,14 +239,14 @@
                         <table id="cpuLimitsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>Pod Name</th>
-                                    <th>Namespace</th>
-                                    <th>Container</th>
-                                    <th>CPU Limit (m)</th>
-                                    <th>CPU Actual (m)</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="cpu_limit_cores">CPU Limit (m) {% if sort_column == 'cpu_limit_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="cpu_usage_cores">CPU Actual (m) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Utilization %</th>
-                                    <th>Status</th>
-                                    <th>Node</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -268,14 +277,14 @@
                         <table id="memoryRequestsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>Pod Name</th>
-                                    <th>Namespace</th>
-                                    <th>Container</th>
-                                    <th>Memory Requested</th>
-                                    <th>Memory Actual</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_request_bytes">Memory Requested {% if sort_column == 'memory_request_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_usage_bytes">Memory Actual {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Utilization %</th>
-                                    <th>Status</th>
-                                    <th>Node</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -306,14 +315,14 @@
                         <table id="memoryLimitsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th>Pod Name</th>
-                                    <th>Namespace</th>
-                                    <th>Container</th>
-                                    <th>Memory Limit</th>
-                                    <th>Memory Actual</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_limit_bytes">Memory Limit {% if sort_column == 'memory_limit_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_usage_bytes">Memory Actual {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Utilization %</th>
-                                    <th>Status</th>
-                                    <th>Node</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                 </tr>
                             </thead>
                             <tbody>

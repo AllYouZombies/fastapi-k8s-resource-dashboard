@@ -23,8 +23,8 @@ services:
       - .env
     environment:
       # Переопределения для Docker окружения
-      - DATABASE_URL=sqlite:////app/k8s_metrics.db
-      - K8S_CONFIG_PATH=/app/.kube/config:ro
+      - DATABASE_URL=sqlite:////app/data/k8s_metrics.db
+      - K8S_CONFIG_PATH=/app/.kube/config
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${CONTAINER_PORT:-8000}/health/liveness"]

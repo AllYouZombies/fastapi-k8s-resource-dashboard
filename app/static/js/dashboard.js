@@ -12,19 +12,8 @@ function initializeTables() {
 
     Object.keys(tableConfigs).forEach(tableId => {
         if (document.getElementById(tableId)) {
-            // Disable DataTables sorting and use server-side sorting instead
-            tables[tableId] = $(`#${tableId}`).DataTable({
-                paging: false,
-                searching: false,
-                ordering: false,
-                info: false,
-                responsive: true,
-                language: {
-                    emptyTable: "No data available"
-                }
-            });
-            
-            // Add click handlers for column headers
+            // Don't initialize DataTables to avoid conflicts with custom pagination
+            // Just add sorting handlers directly
             addSortingHandlers(tableId);
         }
     });
@@ -36,36 +25,12 @@ function initializeTables() {
 // Add sorting click handlers to table headers
 function addSortingHandlers(tableId) {
     const table = document.getElementById(tableId);
-    const headers = table.querySelectorAll('thead th');
-    
-    const columnMappings = {
-        0: 'pod_name',
-        1: 'namespace', 
-        2: 'container_name',
-        3: 'cpu_request_cores', // For requests tables
-        4: 'cpu_usage_cores',
-        5: null, // Utilization % is calculated
-        6: 'pod_phase',
-        7: 'node_name'
-    };
-    
-    // Adjust mapping for limits tables
-    if (tableId.includes('Limits')) {
-        if (tableId.includes('cpu')) {
-            columnMappings[3] = 'cpu_limit_cores';
-        } else {
-            columnMappings[3] = 'memory_limit_bytes';
-        }
-    } else if (tableId.includes('memory')) {
-        columnMappings[3] = 'memory_request_bytes';
-        columnMappings[4] = 'memory_usage_bytes';
-    }
+    const sortableHeaders = table.querySelectorAll('thead th.sortable');
 
-    headers.forEach((header, index) => {
-        const column = columnMappings[index];
+    sortableHeaders.forEach(header => {
+        const column = header.getAttribute('data-column');
         if (column) {
             header.style.cursor = 'pointer';
-            header.innerHTML += ' <i class="fas fa-sort"></i>';
             
             header.addEventListener('click', () => {
                 const url = new URL(window.location);
@@ -81,7 +46,7 @@ function addSortingHandlers(tableId) {
                 url.searchParams.set('sort_direction', newDirection);
                 url.searchParams.set('page', '1'); // Reset to first page
                 
-                window.location = url.toString();
+                window.location.href = url.toString();
             });
         }
     });
@@ -94,22 +59,28 @@ function setupTableControls() {
         const searchTerm = this.value;
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-            updateUrlParams({ 
-                search: searchTerm || null, 
-                page: 1 
-            });
-            window.location.reload();
+            const url = new URL(window.location);
+            if (searchTerm) {
+                url.searchParams.set('search', searchTerm);
+            } else {
+                url.searchParams.delete('search');
+            }
+            url.searchParams.set('page', '1');
+            window.location.href = url.toString();
         }, 500);
     });
 
     // Namespace filter
     $('#namespaceFilter').on('change', function() {
         const selectedNamespace = this.value;
-        updateUrlParams({ 
-            namespace: selectedNamespace === 'all' ? null : selectedNamespace,
-            page: 1 
-        });
-        window.location.reload();
+        const url = new URL(window.location);
+        if (selectedNamespace === 'all') {
+            url.searchParams.delete('namespace');
+        } else {
+            url.searchParams.set('namespace', selectedNamespace);
+        }
+        url.searchParams.set('page', '1');
+        window.location.href = url.toString();
     });
 }
 
