@@ -23,10 +23,13 @@ async def get_metrics(
     db: Session = Depends(get_database_session),
 ):
     """Get paginated resource metrics with optional filtering"""
-    # Build base query for latest metrics
+    settings = get_settings_dependency()
+    
+    # Build base query for latest metrics - exclude excluded namespaces
     query = db.query(ResourceMetric).filter(
         ResourceMetric.timestamp
-        == db.query(func.max(ResourceMetric.timestamp)).scalar()
+        == db.query(func.max(ResourceMetric.timestamp)).scalar(),
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
     )
 
     # Apply filters
@@ -63,9 +66,12 @@ async def get_chart_data(
     hours: int = Query(24, ge=1, le=24), db: Session = Depends(get_database_session)
 ):
     """Get chart data for the last N hours"""
-    # Get recent metrics for charts
+    settings = get_settings_dependency()
+    
+    # Get recent metrics for charts - exclude excluded namespaces
     recent_metrics = (
         db.query(ResourceMetric)
+        .filter(~ResourceMetric.namespace.in_(settings.excluded_namespaces_list))  # Exclude excluded namespaces
         .order_by(desc(ResourceMetric.timestamp))
         .limit(hours * 12)
         .all()
@@ -110,8 +116,12 @@ async def get_chart_data(
 
 @router.get("/namespaces")
 async def get_namespaces(db: Session = Depends(get_database_session)) -> List[str]:
-    """Get all available namespaces"""
-    namespaces = db.query(ResourceMetric.namespace).distinct().all()
+    """Get all available namespaces (excluding excluded namespaces)"""
+    settings = get_settings_dependency()
+    
+    namespaces = db.query(ResourceMetric.namespace).filter(
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
+    ).distinct().all()
     return [ns[0] for ns in namespaces if ns[0]]
 
 

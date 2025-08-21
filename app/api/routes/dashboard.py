@@ -28,11 +28,12 @@ async def dashboard_home(
     """Main dashboard page."""
     settings = get_settings()
 
-    # Build query - exclude inactive pods
+    # Build query - exclude inactive pods and excluded namespaces
     query = db.query(ResourceMetric).filter(
         ResourceMetric.timestamp
         == db.query(func.max(ResourceMetric.timestamp)).scalar(),
-        ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]) # Exclude Succeeded, Failed
+        ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]), # Exclude Succeeded, Failed
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
     )
 
     if search:
@@ -78,8 +79,10 @@ async def dashboard_home(
     offset = (page - 1) * settings.page_size
     resources = query.offset(offset).limit(settings.page_size).all()
 
-    # Get available namespaces for filter
-    namespaces = db.query(ResourceMetric.namespace).distinct().all()
+    # Get available namespaces for filter (exclude excluded namespaces)
+    namespaces = db.query(ResourceMetric.namespace).filter(
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)
+    ).distinct().all()
     namespaces = [ns[0] for ns in namespaces]
 
     # Prepare data for tables
@@ -288,7 +291,8 @@ async def dashboard_home(
     # Calculate summary statistics from ALL records (not just current page)
     all_query = db.query(ResourceMetric).filter(
         ResourceMetric.timestamp
-        == db.query(func.max(ResourceMetric.timestamp)).scalar()
+        == db.query(func.max(ResourceMetric.timestamp)).scalar(),
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
     )
     if search:
         all_query = all_query.filter(ResourceMetric.pod_name.contains(search))
@@ -356,10 +360,13 @@ async def get_summary_stats(
         db: Session = Depends(get_database_session)
 ):
     """API endpoint for summary statistics."""
-    # Get filtered data for summary stats - exclude inactive pods
+    settings = get_settings()
+    
+    # Get filtered data for summary stats - exclude inactive pods and excluded namespaces
     all_query = db.query(ResourceMetric).filter(
         ResourceMetric.timestamp == db.query(func.max(ResourceMetric.timestamp)).scalar(),
-        ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]) # Exclude Succeeded, Failed
+        ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]), # Exclude Succeeded, Failed
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
     )
     if search:
         all_query = all_query.filter(ResourceMetric.pod_name.contains(search))
@@ -404,13 +411,16 @@ async def get_chart_data(
     from collections import defaultdict
     from datetime import datetime, timedelta
     
-    # Get metrics from the last N hours - exclude inactive pods
+    settings = get_settings()
+    
+    # Get metrics from the last N hours - exclude inactive pods and excluded namespaces
     cutoff_time = datetime.utcnow() - timedelta(hours=hours)
     recent_metrics = (
         db.query(ResourceMetric)
         .filter(
             ResourceMetric.timestamp >= cutoff_time,
-            ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]) # Exclude Succeeded, Failed
+            ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]), # Exclude Succeeded, Failed
+            ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
         )
         .order_by(ResourceMetric.timestamp)
         .all()
@@ -481,9 +491,10 @@ async def get_cpu_requests_table(
     """API endpoint for CPU requests table data."""
     settings = get_settings()
     
-    # Build query
+    # Build query - exclude excluded namespaces
     query = db.query(ResourceMetric).filter(
-        ResourceMetric.timestamp == db.query(func.max(ResourceMetric.timestamp)).scalar()
+        ResourceMetric.timestamp == db.query(func.max(ResourceMetric.timestamp)).scalar(),
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
     )
 
     if search:
@@ -544,10 +555,13 @@ async def get_resource_recommendations(
     """API endpoint for resource recommendations based on historical data."""
     from sqlalchemy import func, and_
     
+    settings = get_settings()
+    
     # Build query for this specific pod/container
     query = db.query(ResourceMetric).filter(
         ResourceMetric.pod_name == pod_name,
-        ResourceMetric.container_name == container_name
+        ResourceMetric.container_name == container_name,
+        ~ResourceMetric.namespace.in_(settings.excluded_namespaces_list)  # Exclude excluded namespaces
     )
     
     if namespace:
