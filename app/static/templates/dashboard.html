@@ -351,7 +351,7 @@
         <ul class="pagination justify-content-center">
             {% if current_page > 1 %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ current_page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Previous</a>
+                <a class="page-link" href="/dashboard?page={{ current_page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Previous</a>
             </li>
             {% endif %}
             
@@ -362,14 +362,14 @@
                 </li>
                 {% elif page_num <= 5 or page_num > total_pages - 5 or (page_num >= current_page - 2 and page_num <= current_page + 2) %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_num }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">{{ page_num }}</a>
+                    <a class="page-link" href="/dashboard?page={{ page_num }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">{{ page_num }}</a>
                 </li>
                 {% endif %}
             {% endfor %}
             
             {% if current_page < total_pages %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ current_page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Next</a>
+                <a class="page-link" href="/dashboard?page={{ current_page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Next</a>
             </li>
             {% endif %}
         </ul>
