@@ -22,6 +22,7 @@ async def dashboard_home(
     namespace: Optional[str] = Query(None),
     sort_column: Optional[str] = Query(None),
     sort_direction: Optional[str] = Query("asc"),
+    hide_incomplete: Optional[bool] = Query(False),
     db: Session = Depends(get_database_session),
 ):
     """Main dashboard page."""
@@ -39,14 +40,34 @@ async def dashboard_home(
     if namespace:
         query = query.filter(ResourceMetric.namespace == namespace)
 
+    if hide_incomplete:
+        query = query.filter(
+            ResourceMetric.cpu_request_cores.isnot(None),
+            ResourceMetric.cpu_request_cores > 0,
+            ResourceMetric.memory_request_bytes.isnot(None),
+            ResourceMetric.memory_request_bytes > 0,
+            ResourceMetric.cpu_limit_cores.isnot(None),
+            ResourceMetric.cpu_limit_cores > 0,
+            ResourceMetric.memory_limit_bytes.isnot(None),
+            ResourceMetric.memory_limit_bytes > 0,
+        )
+
     # Apply sorting
     if sort_column and sort_direction in ["asc", "desc"]:
-        sort_attr = getattr(ResourceMetric, sort_column, None)
-        if sort_attr:
+        if sort_column == "utilization_pct":
+            # Special handling for utilization percentage (CPU requests)
+            cpu_utilization = ResourceMetric.cpu_usage_cores / func.nullif(ResourceMetric.cpu_request_cores, 0)
             if sort_direction == "desc":
-                query = query.order_by(desc(sort_attr))
+                query = query.order_by(desc(cpu_utilization))
             else:
-                query = query.order_by(sort_attr)
+                query = query.order_by(cpu_utilization)
+        else:
+            sort_attr = getattr(ResourceMetric, sort_column, None)
+            if sort_attr:
+                if sort_direction == "desc":
+                    query = query.order_by(desc(sort_attr))
+                else:
+                    query = query.order_by(sort_attr)
 
     # Get total count for pagination
     total_count = query.count()
@@ -232,6 +253,7 @@ async def dashboard_home(
             "page_size": settings.page_size,
             "sort_column": sort_column or "",
             "sort_direction": sort_direction,
+            "hide_incomplete": hide_incomplete,
         },
     )
 

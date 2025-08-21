@@ -41,13 +41,18 @@ function addSortingHandlers(tableId) {
                     newDirection = 'desc';
                 }
                 
-                // Build URL for dashboard with proper parameters
+                // Update URL without reload
                 const params = new URLSearchParams(window.location.search);
                 params.set('sort_column', column);
                 params.set('sort_direction', newDirection);
                 params.set('page', '1'); // Reset to first page
                 
-                window.location.href = '/dashboard?' + params.toString();
+                // Update browser URL
+                const newUrl = '/dashboard?' + params.toString();
+                window.history.pushState({}, '', newUrl);
+                
+                // Reload table data via AJAX
+                loadTableData();
             });
         }
     });
@@ -67,7 +72,14 @@ function setupTableControls() {
                 params.delete('search');
             }
             params.set('page', '1');
-            window.location.href = '/dashboard?' + params.toString();
+            
+            // Update URL without reload
+            const newUrl = '/dashboard?' + params.toString();
+            window.history.pushState({}, '', newUrl);
+            
+            // Reload table and summary data
+            loadTableData();
+            loadSummaryData();
         }, 500);
     });
 
@@ -81,7 +93,34 @@ function setupTableControls() {
             params.set('namespace', selectedNamespace);
         }
         params.set('page', '1');
-        window.location.href = '/dashboard?' + params.toString();
+        
+        // Update URL without reload
+        const newUrl = '/dashboard?' + params.toString();
+        window.history.pushState({}, '', newUrl);
+        
+        // Reload table and summary data
+        loadTableData();
+        loadSummaryData();
+    });
+
+    // Hide incomplete data filter
+    $('#hideIncompleteData').on('change', function() {
+        const isChecked = this.checked;
+        const params = new URLSearchParams(window.location.search);
+        if (isChecked) {
+            params.set('hide_incomplete', 'true');
+        } else {
+            params.delete('hide_incomplete');
+        }
+        params.set('page', '1');
+        
+        // Update URL without reload
+        const newUrl = '/dashboard?' + params.toString();
+        window.history.pushState({}, '', newUrl);
+        
+        // Reload table and summary data
+        loadTableData();
+        loadSummaryData();
     });
 }
 
@@ -103,7 +142,7 @@ function initializeCharts() {
                 tension: 0.1,
                 yAxisID: 'y'
             }, {
-                label: 'CPU Usage vs Requests (%)',
+                label: 'vs Requests (%)',
                 data: [],
                 borderColor: 'rgba(54, 162, 235, 1)',
                 backgroundColor: 'rgba(54, 162, 235, 0.1)',
@@ -112,7 +151,7 @@ function initializeCharts() {
                 tension: 0.1,
                 yAxisID: 'y1'
             }, {
-                label: 'CPU Usage vs Limits (%)',
+                label: 'vs Limits (%)',
                 data: [],
                 borderColor: 'rgba(255, 206, 86, 1)',
                 backgroundColor: 'rgba(255, 206, 86, 0.1)',
@@ -186,7 +225,7 @@ function initializeCharts() {
                 tension: 0.1,
                 yAxisID: 'y'
             }, {
-                label: 'Memory Usage vs Requests (%)',
+                label: 'vs Requests (%)',
                 data: [],
                 borderColor: 'rgba(153, 102, 255, 1)',
                 backgroundColor: 'rgba(153, 102, 255, 0.1)',
@@ -195,7 +234,7 @@ function initializeCharts() {
                 tension: 0.1,
                 yAxisID: 'y1'
             }, {
-                label: 'Memory Usage vs Limits (%)',
+                label: 'vs Limits (%)',
                 data: [],
                 borderColor: 'rgba(255, 159, 64, 1)',
                 backgroundColor: 'rgba(255, 159, 64, 0.1)',
@@ -281,6 +320,92 @@ async function loadChartData() {
 
     } catch (error) {
         console.error('Error loading chart data:', error);
+    }
+}
+
+// Load summary data via AJAX
+async function loadSummaryData() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const url = `/api/summary?${params.toString()}`;
+        
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch summary data');
+        
+        const data = await response.json();
+        
+        // Update summary cards
+        updateSummaryCards(data);
+        
+    } catch (error) {
+        console.error('Error loading summary data:', error);
+    }
+}
+
+// Update summary cards with new data
+function updateSummaryCards(data) {
+    // Find and update each card
+    const cards = document.querySelectorAll('.card-text');
+    if (cards.length >= 8) {
+        cards[0].textContent = data.total_cpu_requests.toFixed(1);
+        cards[1].textContent = data.total_cpu_limits.toFixed(1);
+        cards[2].textContent = data.total_memory_requests_gb.toFixed(1);
+        cards[3].textContent = data.total_memory_limits_gb.toFixed(1);
+        cards[4].textContent = data.total_cpu_usage.toFixed(1);
+        cards[5].textContent = data.total_memory_usage_gb.toFixed(1);
+        cards[6].textContent = data.cpu_requests_underutilization.toFixed(1);
+        cards[7].textContent = data.memory_requests_underutilization_gb.toFixed(1);
+    }
+}
+
+// Load table data via AJAX (currently loads all tables at once)
+async function loadTableData() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        
+        // For now, reload the entire page content
+        // In a full implementation, you'd load each table separately
+        const url = `/dashboard?${params.toString()}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch table data');
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Update table content
+        const tables = ['cpuRequestsTable', 'cpuLimitsTable', 'memoryRequestsTable', 'memoryLimitsTable'];
+        tables.forEach(tableId => {
+            const oldTable = document.getElementById(tableId);
+            const newTable = doc.getElementById(tableId);
+            if (oldTable && newTable) {
+                oldTable.innerHTML = newTable.innerHTML;
+            }
+        });
+        
+        // Update pagination
+        const oldPagination = document.querySelector('.pagination');
+        const newPagination = doc.querySelector('.pagination');
+        if (oldPagination && newPagination) {
+            oldPagination.innerHTML = newPagination.innerHTML;
+        }
+        
+        // Re-add sorting handlers to new table headers
+        const tableConfigs = {
+            'cpuRequestsTable': 'CPU Requests vs Usage',
+            'cpuLimitsTable': 'CPU Limits vs Usage',
+            'memoryRequestsTable': 'Memory Requests vs Usage',
+            'memoryLimitsTable': 'Memory Limits vs Usage'
+        };
+        
+        Object.keys(tableConfigs).forEach(tableId => {
+            if (document.getElementById(tableId)) {
+                addSortingHandlers(tableId);
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error loading table data:', error);
     }
 }
 
