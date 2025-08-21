@@ -167,11 +167,15 @@
         </div>
         <div class="col-md-4">
             <label class="form-label">Data Completeness:</label>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
-                <label class="form-check-label" for="hideIncompleteData">
-                    Hide records with missing requests/limits
-                </label>
+            <div class="card border-warning bg-light p-2">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
+                    <label class="form-check-label fw-bold" for="hideIncompleteData">
+                        <i class="fas fa-filter me-1"></i>
+                        Hide incomplete records
+                    </label>
+                    <small class="text-muted d-block">Excludes records missing requests/limits</small>
+                </div>
             </div>
         </div>
     </div>
@@ -393,6 +397,7 @@ $(document).ready(function() {
     initializeTables();
     initializeCharts();
     startAutoRefresh();
+    addPaginationHandlers(); // Add pagination handlers on page load
 });
 </script>
 {% endblock %}

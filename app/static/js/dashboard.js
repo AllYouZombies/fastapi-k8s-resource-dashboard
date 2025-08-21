@@ -200,7 +200,6 @@ function initializeCharts() {
                         text: 'Percentage (%)'
                     },
                     beginAtZero: true,
-                    max: 100,
                     grid: {
                         drawOnChartArea: false,
                     },
@@ -283,7 +282,6 @@ function initializeCharts() {
                         text: 'Percentage (%)'
                     },
                     beginAtZero: true,
-                    max: 100,
                     grid: {
                         drawOnChartArea: false,
                     },
@@ -388,6 +386,8 @@ async function loadTableData() {
         const newPagination = doc.querySelector('.pagination');
         if (oldPagination && newPagination) {
             oldPagination.innerHTML = newPagination.innerHTML;
+            // Add click handlers to new pagination links
+            addPaginationHandlers();
         }
         
         // Re-add sorting handlers to new table headers
@@ -407,6 +407,38 @@ async function loadTableData() {
     } catch (error) {
         console.error('Error loading table data:', error);
     }
+}
+
+// Add pagination click handlers
+function addPaginationHandlers() {
+    const paginationLinks = document.querySelectorAll('.pagination .page-link');
+    
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const href = this.getAttribute('href');
+            if (href && href !== '#') {
+                // Extract page number from href
+                const url = new URL(href, window.location.origin);
+                const params = new URLSearchParams(url.search);
+                
+                // Update current URL
+                const currentParams = new URLSearchParams(window.location.search);
+                const page = params.get('page');
+                if (page) {
+                    currentParams.set('page', page);
+                    
+                    // Update browser URL
+                    const newUrl = '/dashboard?' + currentParams.toString();
+                    window.history.pushState({}, '', newUrl);
+                    
+                    // Reload table data
+                    loadTableData();
+                }
+            }
+        });
+    });
 }
 
 // Auto-refresh functionality

@@ -28,10 +28,11 @@ async def dashboard_home(
     """Main dashboard page."""
     settings = get_settings()
 
-    # Build query
+    # Build query - exclude inactive pods
     query = db.query(ResourceMetric).filter(
         ResourceMetric.timestamp
-        == db.query(func.max(ResourceMetric.timestamp)).scalar()
+        == db.query(func.max(ResourceMetric.timestamp)).scalar(),
+        ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]) # Exclude Succeeded, Failed
     )
 
     if search:
@@ -265,9 +266,10 @@ async def get_summary_stats(
         db: Session = Depends(get_database_session)
 ):
     """API endpoint for summary statistics."""
-    # Get filtered data for summary stats
+    # Get filtered data for summary stats - exclude inactive pods
     all_query = db.query(ResourceMetric).filter(
-        ResourceMetric.timestamp == db.query(func.max(ResourceMetric.timestamp)).scalar()
+        ResourceMetric.timestamp == db.query(func.max(ResourceMetric.timestamp)).scalar(),
+        ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]) # Exclude Succeeded, Failed
     )
     if search:
         all_query = all_query.filter(ResourceMetric.pod_name.contains(search))
@@ -312,11 +314,14 @@ async def get_chart_data(
     from collections import defaultdict
     from datetime import datetime, timedelta
     
-    # Get metrics from the last N hours
+    # Get metrics from the last N hours - exclude inactive pods
     cutoff_time = datetime.utcnow() - timedelta(hours=hours)
     recent_metrics = (
         db.query(ResourceMetric)
-        .filter(ResourceMetric.timestamp >= cutoff_time)
+        .filter(
+            ResourceMetric.timestamp >= cutoff_time,
+            ResourceMetric.pod_phase.in_(["Running", "Pending", "Unknown"]) # Exclude Succeeded, Failed
+        )
         .order_by(ResourceMetric.timestamp)
         .all()
     )
