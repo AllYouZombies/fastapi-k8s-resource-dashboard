@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-from datetime import datetime
 import logging
+from datetime import datetime
+
+from fastapi import APIRouter, Depends
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 from ...core.dependencies import get_database_session
 from ...models.schemas import HealthCheckResponse
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 @router.get("/", response_model=HealthCheckResponse)
 async def health_check(db: Session = Depends(get_database_session)):
     """Health check endpoint for Kubernetes probes"""
-    
+
     # Check database connectivity
     database_status = "healthy"
     try:
@@ -24,7 +25,7 @@ async def health_check(db: Session = Depends(get_database_session)):
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         database_status = "unhealthy"
-    
+
     # Check Kubernetes API connectivity
     kubernetes_status = "healthy"
     try:
@@ -36,7 +37,7 @@ async def health_check(db: Session = Depends(get_database_session)):
     except Exception as e:
         logger.error(f"Kubernetes health check failed: {e}")
         kubernetes_status = "unhealthy"
-    
+
     # Check Prometheus connectivity
     prometheus_status = "healthy"
     try:
@@ -46,20 +47,26 @@ async def health_check(db: Session = Depends(get_database_session)):
     except Exception as e:
         logger.error(f"Prometheus health check failed: {e}")
         prometheus_status = "unhealthy"
-    
+
     # Overall status
-    overall_status = "healthy" if all([
-        database_status == "healthy",
-        kubernetes_status == "healthy", 
-        prometheus_status == "healthy"
-    ]) else "unhealthy"
-    
+    overall_status = (
+        "healthy"
+        if all(
+            [
+                database_status == "healthy",
+                kubernetes_status == "healthy",
+                prometheus_status == "healthy",
+            ]
+        )
+        else "unhealthy"
+    )
+
     return HealthCheckResponse(
         status=overall_status,
         timestamp=datetime.utcnow(),
         database_status=database_status,
         kubernetes_status=kubernetes_status,
-        prometheus_status=prometheus_status
+        prometheus_status=prometheus_status,
     )
 
 

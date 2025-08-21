@@ -1,19 +1,23 @@
 import os
 from pathlib import Path
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
-from .config import get_settings
+from sqlalchemy.orm import Session, sessionmaker
+
 from ..models.database import Base
+from .config import get_settings
 
 settings = get_settings()
 
 # Create directory for SQLite database if needed
 if "sqlite" in settings.database_url:
     # Extract path from sqlite URL (handle both sqlite:/// and sqlite://// formats)
-    db_path = settings.database_url.replace("sqlite:////", "/").replace("sqlite:///", "")
+    db_path = settings.database_url.replace("sqlite:////", "/").replace(
+        "sqlite:///", ""
+    )
     if not db_path.startswith("/"):
         db_path = os.path.join(os.getcwd(), db_path)
-    
+
     db_dir = os.path.dirname(db_path)
     if db_dir and not os.path.exists(db_dir):
         try:
@@ -21,14 +25,17 @@ if "sqlite" in settings.database_url:
         except PermissionError:
             # If we can't create the directory, try using /tmp as fallback
             import tempfile
+
             db_path = os.path.join(tempfile.gettempdir(), "k8s_metrics.db")
             settings.database_url = f"sqlite:///{db_path}"
 
 # Create SQLAlchemy engine
 engine = create_engine(
     settings.database_url,
-    connect_args={"check_same_thread": False} if "sqlite" in settings.database_url else {},
-    echo=settings.debug
+    connect_args=(
+        {"check_same_thread": False} if "sqlite" in settings.database_url else {}
+    ),
+    echo=settings.debug,
 )
 
 # Create SessionLocal class

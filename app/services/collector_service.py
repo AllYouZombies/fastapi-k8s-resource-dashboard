@@ -1,12 +1,13 @@
 import asyncio
+import logging
 from datetime import datetime, timedelta
-from typing import List, Dict
-from ..models.database import ResourceMetric, ResourceSummary
+from typing import Dict, List
+
+from ..core.config import get_settings
 from ..core.database import SessionLocal
+from ..models.database import ResourceMetric, ResourceSummary
 from .kubernetes_service import KubernetesService
 from .prometheus_service import PrometheusService
-from ..core.config import get_settings
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -55,27 +56,26 @@ class ResourceCollectorService:
 
         for pod in pods_data:
             pod_key = f"{pod['namespace']}/{pod['name']}"
-            cpu_usage = usage_metrics['cpu_usage'].get(pod_key, 0.0)
-            memory_usage = usage_metrics['memory_usage'].get(pod_key, 0)
+            cpu_usage = usage_metrics["cpu_usage"].get(pod_key, 0.0)
+            memory_usage = usage_metrics["memory_usage"].get(pod_key, 0)
 
-            for container in pod['containers']:
+            for container in pod["containers"]:
                 metric = ResourceMetric(
                     timestamp=timestamp,
-                    namespace=pod['namespace'],
-                    pod_name=pod['name'],
-                    container_name=container['name'],
-                    node_name=pod.get('node_name'),
-                    pod_phase=pod.get('phase'),
-
+                    namespace=pod["namespace"],
+                    pod_name=pod["name"],
+                    container_name=container["name"],
+                    node_name=pod.get("node_name"),
+                    pod_phase=pod.get("phase"),
                     # Resource requests and limits
-                    cpu_request_cores=container['requests']['cpu'],
-                    memory_request_bytes=container['requests']['memory'],
-                    cpu_limit_cores=container['limits']['cpu'],
-                    memory_limit_bytes=container['limits']['memory'],
-
+                    cpu_request_cores=container["requests"]["cpu"],
+                    memory_request_bytes=container["requests"]["memory"],
+                    cpu_limit_cores=container["limits"]["cpu"],
+                    memory_limit_bytes=container["limits"]["memory"],
                     # Actual usage
-                    cpu_usage_cores=cpu_usage / len(pod['containers']),  # Distribute evenly
-                    memory_usage_bytes=memory_usage // len(pod['containers'])
+                    cpu_usage_cores=cpu_usage
+                    / len(pod["containers"]),  # Distribute evenly
+                    memory_usage_bytes=memory_usage // len(pod["containers"]),
                 )
                 metrics_to_store.append(metric)
 
@@ -102,7 +102,8 @@ class ResourceCollectorService:
             while True:
                 # Get IDs of records to delete
                 ids_to_delete = [
-                    row.id for row in db.query(ResourceMetric.id)
+                    row.id
+                    for row in db.query(ResourceMetric.id)
                     .filter(ResourceMetric.timestamp < cutoff_time)
                     .limit(1000)
                 ]
@@ -111,17 +112,17 @@ class ResourceCollectorService:
                     break
 
                 # Delete by IDs
-                db.query(ResourceMetric) \
-                    .filter(ResourceMetric.id.in_(ids_to_delete)) \
-                    .delete(synchronize_session=False)
+                db.query(ResourceMetric).filter(
+                    ResourceMetric.id.in_(ids_to_delete)
+                ).delete(synchronize_session=False)
 
                 db.commit()
                 await asyncio.sleep(0.1)  # Brief pause
 
             # Delete old summaries
-            db.query(ResourceSummary) \
-                .filter(ResourceSummary.timestamp < cutoff_time) \
-                .delete(synchronize_session=False)
+            db.query(ResourceSummary).filter(
+                ResourceSummary.timestamp < cutoff_time
+            ).delete(synchronize_session=False)
 
             db.commit()
             logger.info(f"Cleaned up data older than {cutoff_time}")
