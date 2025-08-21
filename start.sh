@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Kubernetes Resource Monitor - Startup Script
-# Автоматическая подготовка и запуск приложения
+# Automated setup and application launch
 
 set -e
 
-# Цвета для вывода
+# Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -16,7 +16,7 @@ echo -e "${BLUE}🚀 Kubernetes Resource Monitor - Startup Script${NC}"
 echo -e "${BLUE}Repository: https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard${NC}"
 echo "=================================================="
 
-# Функция для вывода статуса
+# Status output functions
 print_status() {
     echo -e "${GREEN}✓${NC} $1"
 }
@@ -29,91 +29,91 @@ print_error() {
     echo -e "${RED}✗${NC} $1"
 }
 
-# Проверка зависимостей
-echo -e "\n${BLUE}Проверка зависимостей...${NC}"
+# Dependency checks
+echo -e "\n${BLUE}Checking dependencies...${NC}"
 
 if ! command -v docker &> /dev/null; then
-    print_error "Docker не установлен!"
+    print_error "Docker is not installed!"
     exit 1
 fi
-print_status "Docker найден"
+print_status "Docker found"
 
 if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-    print_error "Docker Compose не установлен!"
+    print_error "Docker Compose is not installed!"
     exit 1
 fi
-print_status "Docker Compose найден"
+print_status "Docker Compose found"
 
 if ! command -v kubectl &> /dev/null; then
-    print_warning "kubectl не найден - проверьте доступ к Kubernetes"
+    print_warning "kubectl not found - please check Kubernetes access"
 else
-    print_status "kubectl найден"
+    print_status "kubectl found"
 fi
 
-# Создание .env файла если не существует
+# Create .env file if it doesn't exist
 if [ ! -f .env ]; then
-    echo -e "\n${BLUE}Создание файла конфигурации...${NC}"
+    echo -e "\n${BLUE}Creating configuration file...${NC}"
     cp .env.example .env
-    print_status "Создан .env файл из шаблона"
-    print_warning "ОБЯЗАТЕЛЬНО настройте PROMETHEUS_URL в файле .env!"
-    echo -e "   Отредактируйте файл: ${YELLOW}nano .env${NC}"
-    echo -e "   Укажите ваш Prometheus: ${YELLOW}PROMETHEUS_URL=http://your-prometheus:9090${NC}"
+    print_status "Created .env file from template"
+    print_warning "IMPORTANT: Configure PROMETHEUS_URL in the .env file!"
+    echo -e "   Edit the file: ${YELLOW}nano .env${NC}"
+    echo -e "   Set your Prometheus: ${YELLOW}PROMETHEUS_URL=http://your-prometheus:9090${NC}"
 else
-    print_status "Файл .env уже существует"
+    print_status ".env file already exists"
 fi
 
-# Настройка UID/GID для доступа к kubeconfig
-echo -e "\n${BLUE}Настройка прав доступа...${NC}"
+# Configure UID/GID for kubeconfig access
+echo -e "\n${BLUE}Setting up access permissions...${NC}"
 if ! grep -q "HOST_UID=" .env; then
     echo "HOST_UID=$(id -u)" >> .env
     echo "HOST_GID=$(id -g)" >> .env
-    print_status "Добавлены HOST_UID и HOST_GID в .env"
+    print_status "Added HOST_UID and HOST_GID to .env"
 else
-    # Обновляем существующие значения
+    # Update existing values
     sed -i "s/^HOST_UID=.*/HOST_UID=$(id -u)/" .env
     sed -i "s/^HOST_GID=.*/HOST_GID=$(id -g)/" .env
-    print_status "Обновлены HOST_UID и HOST_GID в .env"
+    print_status "Updated HOST_UID and HOST_GID in .env"
 fi
 
-# Создание необходимых директорий
-echo -e "\n${BLUE}Создание директорий...${NC}"
+# Create necessary directories
+echo -e "\n${BLUE}Creating directories...${NC}"
 mkdir -p data logs
-print_status "Созданы директории data/ и logs/"
+print_status "Created data/ and logs/ directories"
 
-# Проверка kubeconfig
-echo -e "\n${BLUE}Проверка доступа к Kubernetes...${NC}"
+# Check kubeconfig
+echo -e "\n${BLUE}Checking Kubernetes access...${NC}"
 if [ -f ~/.kube/config ]; then
-    print_status "kubeconfig найден в ~/.kube/config"
+    print_status "kubeconfig found in ~/.kube/config"
     if kubectl get nodes &> /dev/null; then
-        print_status "Подключение к Kubernetes работает"
+        print_status "Kubernetes connection working"
     else
-        print_warning "kubeconfig найден, но подключение к кластеру не работает"
+        print_warning "kubeconfig found, but cluster connection failed"
     fi
 else
-    print_warning "kubeconfig не найден в ~/.kube/config"
-    echo "   Настройте доступ к Kubernetes или измените KUBECONFIG_PATH в .env"
+    print_warning "kubeconfig not found in ~/.kube/config"
+    echo "   Configure Kubernetes access or change KUBECONFIG_PATH in .env"
 fi
 
-# Проверка настроек Prometheus
-echo -e "\n${BLUE}Проверка настроек Prometheus...${NC}"
+# Check Prometheus settings
+echo -e "\n${BLUE}Checking Prometheus settings...${NC}"
 if [ -f .env ]; then
     PROMETHEUS_URL=$(grep "^PROMETHEUS_URL=" .env | cut -d'=' -f2)
     if [[ "$PROMETHEUS_URL" == "http://your-prometheus-server:9090" ]]; then
-        print_error "PROMETHEUS_URL не настроен! Отредактируйте .env файл"
-        echo -e "   Текущее значение: ${RED}$PROMETHEUS_URL${NC}"
-        echo -e "   Измените на ваш Prometheus сервер"
+        print_error "PROMETHEUS_URL not configured! Edit the .env file"
+        echo -e "   Current value: ${RED}$PROMETHEUS_URL${NC}"
+        echo -e "   Change to your Prometheus server"
         exit 1
     else
-        print_status "PROMETHEUS_URL настроен: $PROMETHEUS_URL"
+        print_status "PROMETHEUS_URL configured: $PROMETHEUS_URL"
     fi
 fi
 
-# Запуск приложения
-echo -e "\n${BLUE}Запуск приложения...${NC}"
+# Start application
+echo -e "\n${BLUE}Starting application...${NC}"
 
-# Остановка старых контейнеров если есть
+# Stop old containers if they exist
 if docker ps -q -f name=k8s-resource-monitor &> /dev/null; then
-    echo "Остановка старых контейнеров..."
+    echo "Stopping old containers..."
     if command -v docker-compose &> /dev/null; then
         docker-compose down
     else
@@ -121,20 +121,20 @@ if docker ps -q -f name=k8s-resource-monitor &> /dev/null; then
     fi
 fi
 
-# Сборка и запуск
-echo "Сборка Docker образа..."
+# Build and start
+echo "Building Docker image..."
 if command -v docker-compose &> /dev/null; then
     docker-compose build
-    echo "Запуск контейнера..."
+    echo "Starting container..."
     docker-compose up -d
 else
     docker compose build
-    echo "Запуск контейнера..."
+    echo "Starting container..."
     docker compose up -d
 fi
 
-# Проверка запуска
-echo -e "\n${BLUE}Проверка состояния...${NC}"
+# Check startup
+echo -e "\n${BLUE}Checking status...${NC}"
 sleep 5
 
 if command -v docker-compose &> /dev/null; then
@@ -144,13 +144,13 @@ else
 fi
 
 if $COMPOSE_CMD ps | grep -q "Up"; then
-    print_status "Контейнер запущен успешно"
+    print_status "Container started successfully"
     
-    # Ожидание готовности приложения
-    echo "Ожидание готовности приложения..."
+    # Wait for application readiness
+    echo "Waiting for application to be ready..."
     for i in {1..30}; do
         if curl -s http://localhost:8000/health/liveness &> /dev/null; then
-            print_status "Приложение готово к работе!"
+            print_status "Application is ready!"
             break
         fi
         echo -n "."
@@ -158,29 +158,29 @@ if $COMPOSE_CMD ps | grep -q "Up"; then
     done
     echo ""
     
-    # Информация о доступе
-    echo -e "\n${GREEN}🎉 Приложение успешно запущено!${NC}"
+    # Access information
+    echo -e "\n${GREEN}🎉 Application started successfully!${NC}"
     echo "=================================================="
-    echo -e "🌐 Веб-интерфейс: ${BLUE}http://localhost:8000${NC}"
+    echo -e "🌐 Web Interface: ${BLUE}http://localhost:8000${NC}"
     echo -e "📊 Dashboard: ${BLUE}http://localhost:8000/dashboard${NC}"
     echo -e "❤️ Health Check: ${BLUE}http://localhost:8000/health${NC}"
     
-    echo -e "\n${BLUE}Полезные команды:${NC}"
+    echo -e "\n${BLUE}Useful commands:${NC}"
     if command -v docker-compose &> /dev/null; then
-        echo "  Логи:           docker-compose logs -f"
-        echo "  Остановка:      docker-compose down"
-        echo "  Перезапуск:     docker-compose restart"
-        echo "  Статус:         docker-compose ps"
+        echo "  Logs:           docker-compose logs -f"
+        echo "  Stop:           docker-compose down"
+        echo "  Restart:        docker-compose restart"
+        echo "  Status:         docker-compose ps"
     else
-        echo "  Логи:           docker compose logs -f"
-        echo "  Остановка:      docker compose down"
-        echo "  Перезапуск:     docker compose restart"
-        echo "  Статус:         docker compose ps"
+        echo "  Logs:           docker compose logs -f"
+        echo "  Stop:           docker compose down"
+        echo "  Restart:        docker compose restart"
+        echo "  Status:         docker compose ps"
     fi
     
 else
-    print_error "Ошибка запуска контейнера!"
-    echo -e "\n${BLUE}Логи для диагностики:${NC}"
+    print_error "Container startup failed!"
+    echo -e "\n${BLUE}Logs for diagnosis:${NC}"
     $COMPOSE_CMD logs --tail 20
     exit 1
 fi

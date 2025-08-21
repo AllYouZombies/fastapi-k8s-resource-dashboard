@@ -132,19 +132,15 @@ async def dashboard_home(
             return (mem_val / resource.memory_limit_bytes * 100) if resource.memory_limit_bytes else 0
 
         cpu_req_pct_current = calc_cpu_req_pct(resource.cpu_usage_cores or 0)
-        cpu_req_pct_min = calc_cpu_req_pct(hist_stats.get("cpu_min", 0))
         cpu_req_pct_max = calc_cpu_req_pct(hist_stats.get("cpu_max", 0))
         
         cpu_limit_pct_current = calc_cpu_limit_pct(resource.cpu_usage_cores or 0)
-        cpu_limit_pct_min = calc_cpu_limit_pct(hist_stats.get("cpu_min", 0))
         cpu_limit_pct_max = calc_cpu_limit_pct(hist_stats.get("cpu_max", 0))
         
         mem_req_pct_current = calc_mem_req_pct(resource.memory_usage_bytes or 0)
-        mem_req_pct_min = calc_mem_req_pct(hist_stats.get("memory_min", 0))
         mem_req_pct_max = calc_mem_req_pct(hist_stats.get("memory_max", 0))
         
         mem_limit_pct_current = calc_mem_limit_pct(resource.memory_usage_bytes or 0)
-        mem_limit_pct_min = calc_mem_limit_pct(hist_stats.get("memory_min", 0))
         mem_limit_pct_max = calc_mem_limit_pct(hist_stats.get("memory_max", 0))
 
         base_data = {
@@ -155,56 +151,51 @@ async def dashboard_home(
             "status": resource.pod_phase,
         }
 
-        # Helper function to format min/current/max values
-        def format_cpu_values(min_val, current_val, max_val):
-            min_m = int(min_val * 1000) if min_val else 0
+        # Helper function to format current/max values
+        def format_cpu_values(current_val, max_val):
             current_m = int(current_val * 1000) if current_val else 0
             max_m = int(max_val * 1000) if max_val else 0
             
-            # If all values are the same, show only one value
-            if min_m == current_m == max_m:
+            # If values are the same, show only one value
+            if current_m == max_m:
                 display = f"{current_m}m"
             else:
-                display = f"{min_m}m {current_m}m {max_m}m"
+                display = f"{current_m}m {max_m}m"
                 
             return {
-                "min": f"{min_m}m",
                 "current": f"{current_m}m", 
                 "max": f"{max_m}m",
                 "display": display
             }
         
-        def format_memory_values(min_val, current_val, max_val):
-            min_mi = int(min_val / (1024 ** 2)) if min_val else 0
+        def format_memory_values(current_val, max_val):
             current_mi = int(current_val / (1024 ** 2)) if current_val else 0
             max_mi = int(max_val / (1024 ** 2)) if max_val else 0
             
-            # If all values are the same, show only one value
-            if min_mi == current_mi == max_mi:
+            # If values are the same, show only one value
+            if current_mi == max_mi:
                 display = f"{current_mi}Mi"
             else:
-                display = f"{min_mi}Mi {current_mi}Mi {max_mi}Mi"
+                display = f"{current_mi}Mi {max_mi}Mi"
                 
             return {
-                "min": f"{min_mi}Mi",
                 "current": f"{current_mi}Mi",
                 "max": f"{max_mi}Mi", 
                 "display": display
             }
         
-        def format_percentage_values(min_pct, current_pct, max_pct):
-            # Check if all values are not None
-            if all(x is not None for x in [min_pct, current_pct, max_pct]):
-                # If all values are the same, show only one value
-                if abs(min_pct - current_pct) < 0.1 and abs(current_pct - max_pct) < 0.1:
+        def format_percentage_values(current_pct, max_pct):
+            # Check if values are not None
+            if all(x is not None for x in [current_pct, max_pct]):
+                # If values are the same, show only one value
+                if abs(current_pct - max_pct) < 0.1:
                     display = f"{current_pct:.1f}%"
                 else:
-                    display = f"{min_pct:.1f}% {current_pct:.1f}% {max_pct:.1f}%"
+                    display = f"{current_pct:.1f}% {max_pct:.1f}%"
             else:
                 display = "N/A"
                 
             return {
-                "min": f"{min_pct:.1f}%" if min_pct is not None else "N/A",
                 "current": f"{current_pct:.1f}%" if current_pct is not None else "N/A",
                 "max": f"{max_pct:.1f}%" if max_pct is not None else "N/A",
                 "display": display
@@ -212,12 +203,11 @@ async def dashboard_home(
 
         # CPU requests vs usage (convert to millicores)
         cpu_actual_formatted = format_cpu_values(
-            hist_stats.get("cpu_min", 0),
             resource.cpu_usage_cores or 0, 
             hist_stats.get("cpu_max", 0)
         )
         cpu_req_pct_formatted = format_percentage_values(
-            cpu_req_pct_min, cpu_req_pct_current, cpu_req_pct_max
+            cpu_req_pct_current, cpu_req_pct_max
         )
         
         cpu_req_row = base_data.copy()
@@ -229,18 +219,16 @@ async def dashboard_home(
             ),
             "actual": cpu_actual_formatted["display"],
             "actual_current": cpu_actual_formatted["current"],
-            "actual_min": cpu_actual_formatted["min"],
             "actual_max": cpu_actual_formatted["max"],
             "utilization_pct": cpu_req_pct_formatted["display"],
             "utilization_pct_current": cpu_req_pct_formatted["current"],
-            "utilization_pct_min": cpu_req_pct_formatted["min"],
             "utilization_pct_max": cpu_req_pct_formatted["max"],
         })
         cpu_requests_data.append(cpu_req_row)
 
         # CPU limits vs usage (convert to millicores)
         cpu_limit_pct_formatted = format_percentage_values(
-            cpu_limit_pct_min, cpu_limit_pct_current, cpu_limit_pct_max
+            cpu_limit_pct_current, cpu_limit_pct_max
         )
         
         cpu_limit_row = base_data.copy()
@@ -252,23 +240,20 @@ async def dashboard_home(
             ),
             "actual": cpu_actual_formatted["display"],
             "actual_current": cpu_actual_formatted["current"],
-            "actual_min": cpu_actual_formatted["min"],
             "actual_max": cpu_actual_formatted["max"],
             "utilization_pct": cpu_limit_pct_formatted["display"],
             "utilization_pct_current": cpu_limit_pct_formatted["current"],
-            "utilization_pct_min": cpu_limit_pct_formatted["min"],
             "utilization_pct_max": cpu_limit_pct_formatted["max"],
         })
         cpu_limits_data.append(cpu_limit_row)
 
         # Memory requests vs usage
         memory_actual_formatted = format_memory_values(
-            hist_stats.get("memory_min", 0),
             resource.memory_usage_bytes or 0,
             hist_stats.get("memory_max", 0)
         )
         mem_req_pct_formatted = format_percentage_values(
-            mem_req_pct_min, mem_req_pct_current, mem_req_pct_max
+            mem_req_pct_current, mem_req_pct_max
         )
         
         mem_req_row = base_data.copy()
@@ -280,18 +265,16 @@ async def dashboard_home(
             ),
             "actual": memory_actual_formatted["display"],
             "actual_current": memory_actual_formatted["current"],
-            "actual_min": memory_actual_formatted["min"],
             "actual_max": memory_actual_formatted["max"],
             "utilization_pct": mem_req_pct_formatted["display"],
             "utilization_pct_current": mem_req_pct_formatted["current"],
-            "utilization_pct_min": mem_req_pct_formatted["min"],
             "utilization_pct_max": mem_req_pct_formatted["max"],
         })
         memory_requests_data.append(mem_req_row)
 
         # Memory limits vs usage
         mem_limit_pct_formatted = format_percentage_values(
-            mem_limit_pct_min, mem_limit_pct_current, mem_limit_pct_max
+            mem_limit_pct_current, mem_limit_pct_max
         )
         
         mem_limit_row = base_data.copy()
@@ -303,11 +286,9 @@ async def dashboard_home(
             ),
             "actual": memory_actual_formatted["display"],
             "actual_current": memory_actual_formatted["current"],
-            "actual_min": memory_actual_formatted["min"],
             "actual_max": memory_actual_formatted["max"],
             "utilization_pct": mem_limit_pct_formatted["display"],
             "utilization_pct_current": mem_limit_pct_formatted["current"],
-            "utilization_pct_min": mem_limit_pct_formatted["min"],
             "utilization_pct_max": mem_limit_pct_formatted["max"],
         })
         memory_limits_data.append(mem_limit_row)

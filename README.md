@@ -1,141 +1,145 @@
 # Kubernetes Resource Monitor
 
-Система мониторинга и анализа утилизации ресурсов в кластере Kubernetes. Позволяет сравнить заявленные ресурсы (requests/limits) с фактическим потреблением CPU и памяти.
+**A comprehensive monitoring and analysis tool for Kubernetes resource utilization.** Compare your declared resources (requests/limits) with actual CPU and memory consumption to optimize your cluster efficiency.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-green.svg)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-red.svg)
+![GitHub issues](https://img.shields.io/github/issues/AllYouZombies/fastapi-k8s-resource-dashboard)
+![GitHub stars](https://img.shields.io/github/stars/AllYouZombies/fastapi-k8s-resource-dashboard)
 
-## 📸 Интерфейс системы
+> 🎯 **Perfect for** DevOps engineers, Platform teams, and anyone looking to optimize Kubernetes resource allocation and reduce costs.
+
+## 📸 See It In Action
 
 <table>
 <tr>
 <td width="50%" align="center">
 <img src="docs/media/screenshot-03.png" alt="Resource Recommendations" width="100%">
-<br><em>Система рекомендаций ресурсов с автоматической генерацией YAML</em>
+<br><em>Smart resource recommendations with auto-generated YAML</em>
 </td>
 <td width="50%">
 <img src="docs/media/screenshot-01.png" alt="Dashboard Overview" width="100%">
-<br><em>Основной дашборд с метриками и сводными данными</em>
+<br><em>Main dashboard with cluster metrics and insights</em>
 <br><br>
 <img src="docs/media/screenshot-02.png" alt="Resource Tables" width="100%">
-<br><em>Интерактивные таблицы с данными о ресурсах и историей потребления</em>
+<br><em>Interactive tables with resource data and consumption history</em>
 </td>
 </tr>
 </table>
 
-## 🚀 Быстрый старт
+## 🚀 Quick Start
 
-### Требования
-- Docker и Docker Compose
-- Доступ к Kubernetes кластеру (kubeconfig)
-- Доступ к Prometheus серверу
+### Prerequisites
+- Docker and Docker Compose
+- Kubernetes cluster access (kubeconfig)
+- Prometheus server access
 
-### Установка и запуск
+### Installation & Launch
 
 ```bash
-# 1. Клонирование репозитория
+# 1. Clone the repository
 git clone https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard.git
 cd fastapi-k8s-resource-dashboard
 
-# 2. Настройка конфигурации
+# 2. Configure environment
 cp .env.example .env
-# Отредактируйте .env и укажите ваш Prometheus:
+# Edit .env and set your Prometheus URL:
 # PROMETHEUS_URL=http://your-prometheus:9090
 
-# 3. Запуск (автоматический скрипт)
+# 3. Start the application (automated script)
 ./start.sh
 ```
 
-**Или ручной запуск:**
+**Alternative manual start:**
 
 ```bash
-# Создание директорий
+# Create necessary directories
 mkdir -p data logs
 
-# Запуск с Docker Compose
+# Start with Docker Compose
 docker-compose up -d
 
-# Проверка логов
+# Check logs
 docker-compose logs -f
 ```
 
-### Доступ к приложению
+### Access the Application
 
-- 🌐 **Основной интерфейс**: http://localhost:8000
+- 🌐 **Main Interface**: http://localhost:8000
 - 📊 **Dashboard**: http://localhost:8000/dashboard  
 - ❤️ **Health Check**: http://localhost:8000/health
 
-## 📋 Возможности
+## ✨ Key Features
 
-- 📊 **Мониторинг ресурсов** - CPU и память всех подов с историческими данными (min/current/max)
-- 📈 **Интерактивные таблицы** - 4 специализированные таблицы с поиском, фильтрацией и сортировкой
-- 📊 **Графики в реальном времени** - Отслеживание процентов утилизации CPU/Memory vs requests/limits
-- 🔧 **Умные рекомендации** - Автоматический расчет оптимальных requests/limits с генерацией YAML
-- ⏱️ **Автоматический сбор** - Обновление данных каждые 5 минут из Kubernetes API и Prometheus
-- 🔍 **Продвинутые фильтры** - По namespace, неполным данным, с исключением системных namespace'ов
+- 📊 **Resource Monitoring** - Track CPU and memory usage across all pods with historical data (current/max)
+- 📈 **Interactive Tables** - 4 specialized tables with search, filtering, and sorting capabilities
+- 📊 **Real-time Charts** - Monitor utilization percentages for CPU/Memory vs requests/limits
+- 🔧 **Smart Recommendations** - Auto-calculate optimal requests/limits with ready-to-use YAML
+- ⏱️ **Automated Collection** - Data updates every 5 minutes from Kubernetes API and Prometheus
+- 🔍 **Advanced Filtering** - Filter by namespace, incomplete data, exclude system namespaces
 
-### Интерфейс
+### How It Works
 
-**Дашборд содержит:**
-- Сводная панель с метриками кластера
-- 4 интерактивных графика утилизации (CPU/Memory vs Requests/Limits)
-- 4 таблицы ресурсов с поиском, фильтрацией и сортировкой
-- Кнопки рекомендаций в каждой строке таблиц
+**The dashboard provides:**
+- Summary panel with cluster-wide metrics
+- 4 interactive utilization charts (CPU/Memory vs Requests/Limits)
+- 4 resource tables with search, filtering, and sorting
+- Smart recommendation buttons in each table row
 
-**Система рекомендаций:**
-- Requests основываются на текущем потреблении
-- Limits рассчитываются по максимальному потреблению + 25% запас
-- Автоматическая генерация готовых YAML конфигураций
+**Recommendation system:**
+- Requests based on current consumption patterns
+- Limits calculated from historical maximum usage + 25% headroom
+- Auto-generated ready-to-use YAML configurations
 
-## 🛠️ Технические особенности
+## 🛠️ Technical Stack
 
-**Стек технологий:**
-- FastAPI (асинхронный Python)
+**Technology stack:**
+- FastAPI (async Python web framework)
 - Bootstrap 5 + Chart.js + DataTables
-- SQLite с оптимизированными индексами
-- Kubernetes API + Prometheus API
+- SQLite with optimized time-series indexes
+- Kubernetes API + Prometheus API integration
 
-**Безопасность:**
-- Минимальные RBAC права (read-only)
-- Непривилегированный пользователь в контейнере
-- Исключение системных namespace'ов (kube-system, etc.)
+**Security features:**
+- Minimal RBAC permissions (read-only access)
+- Non-privileged container user
+- System namespace exclusion (kube-system, etc.)
 
-## ⚙️ Настройка окружения
+## ⚙️ Configuration
 
-**Обязательные настройки в `.env` файле:**
+**Required settings in `.env` file:**
 
 ```bash
-# URL вашего Prometheus сервера (ОБЯЗАТЕЛЬНО!)
+# Your Prometheus server URL (REQUIRED!)
 PROMETHEUS_URL=http://your-prometheus:9090
 
-# Путь к kubeconfig (по умолчанию ~/.kube/config)
+# Path to kubeconfig (defaults to ~/.kube/config)
 KUBECONFIG_PATH=~/.kube/config
 
-# UID/GID пользователя хоста (автоматически устанавливается start.sh)
+# Host user UID/GID (automatically set by start.sh)
 HOST_UID=1000
 HOST_GID=1000
 ```
 
-**Примеры для разных окружений:**
+**Environment examples:**
 
 ```bash
-# Локальный Prometheus
+# Local Prometheus
 PROMETHEUS_URL=http://localhost:9090
 
-# Prometheus в Kubernetes
+# Prometheus in Kubernetes
 PROMETHEUS_URL=http://kube-prometheus-stack-prometheus.monitoring.svc:9090
 
-# Внешний Prometheus
+# External Prometheus
 PROMETHEUS_URL=https://prometheus.company.com
 
-# Port-forward к Prometheus
+# Port-forwarded Prometheus
 PROMETHEUS_URL=http://host.docker.internal:9090
 ```
 
-### Права доступа к kubeconfig
+### Kubeconfig Access
 
-Контейнер создает пользователя с теми же UID/GID, что и у пользователя хоста, для доступа к kubeconfig файлу. Это настраивается автоматически через build args в Docker Compose:
+The container creates a user with the same UID/GID as the host user for kubeconfig file access. This is automatically configured through Docker Compose build args:
 
 ```yaml
 build:
@@ -144,50 +148,81 @@ build:
     HOST_GID: ${HOST_GID:-1000}
 ```
 
-Скрипт `start.sh` автоматически определяет ваши UID/GID и добавляет их в `.env` файл.
+The `start.sh` script automatically detects your UID/GID and adds them to the `.env` file.
 
-## 🔧 Управление
+## 🔧 Management
 
-### Make команды
+### Make Commands
 
 ```bash
-make help       # Показать все доступные команды
-make start      # Запуск приложения
-make stop       # Остановка приложения
-make logs       # Просмотр логов
-make restart    # Перезапуск приложения
-make clean      # Очистка данных
+make help       # Show all available commands
+make start      # Start application
+make stop       # Stop application
+make logs       # View logs
+make restart    # Restart application
+make clean      # Clean data
 ```
 
-### Docker Compose команды
+### Docker Compose Commands
 
 ```bash
-docker-compose up -d        # Запуск в фоне
-docker-compose logs -f      # Просмотр логов
-docker-compose ps           # Статус контейнеров
-docker-compose down         # Остановка и удаление
+docker-compose up -d        # Start in background
+docker-compose logs -f      # Follow logs
+docker-compose ps           # Container status
+docker-compose down         # Stop and remove
 ```
 
 ## 📡 REST API
 
-**Основные endpoints:**
-- `GET /api/metrics` - Метрики с пагинацией и фильтрами
-- `GET /api/chart-data` - Данные для графиков
-- `GET /api/recommendations/{pod_name}/{container_name}` - Рекомендации ресурсов
-- `GET /health` - Состояние системы
+**Main endpoints:**
+- `GET /api/metrics` - Metrics with pagination and filters
+- `GET /api/chart-data` - Chart data for visualizations
+- `GET /api/recommendations/{pod_name}/{container_name}` - Resource recommendations
+- `GET /health` - System health status
 
-## 🚀 Развертывание в Kubernetes
+## 🚀 Kubernetes Deployment
 
-Для развертывания в Kubernetes используйте готовые манифесты:
+Deploy to Kubernetes using the provided manifests:
 
 ```bash
 kubectl apply -f k8s/
 ```
 
-Манифесты находятся в папке `k8s/` и включают в себя все необходимые ресурсы (Deployment, Service, RBAC).
+The `k8s/` directory contains all necessary resources (Deployment, Service, RBAC).
 
-## 🤝 Поддержка
+## 🤝 Contributing
 
-Issues: https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard/issues
+We welcome contributions from the community! Here's how you can help:
 
-**MIT License**
+- 🐛 **Report bugs** - [Open an issue](https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard/issues)
+- 💡 **Suggest features** - Share your ideas for improvements
+- 🔧 **Submit pull requests** - Help improve the code
+- 📖 **Improve documentation** - Make it easier for others to contribute
+
+### Quick Contribution Guide
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and test them
+4. Commit: `git commit -m 'Add amazing feature'`
+5. Push: `git push origin feature/amazing-feature`
+6. Open a Pull Request
+
+See our [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+## 📞 Support & Community
+
+- 🐛 **Issues**: [GitHub Issues](https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard/discussions)
+- 📋 **Project Board**: [GitHub Projects](https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard/projects)
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Made with ❤️ for the Kubernetes community**
+
+[![GitHub stars](https://img.shields.io/github/stars/AllYouZombies/fastapi-k8s-resource-dashboard?style=social)](https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/AllYouZombies/fastapi-k8s-resource-dashboard?style=social)](https://github.com/AllYouZombies/fastapi-k8s-resource-dashboard/network/members)

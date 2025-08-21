@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort
+        pip install -r requirements.txt
+        
+    - name: Lint with flake8
+      run: |
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        
+    - name: Check formatting with black
+      run: black --check app/
+      
+    - name: Check import sorting with isort
+      run: isort --check-only app/
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio httpx
+        pip install -r requirements.txt
+        
+    - name: Run tests
+      run: |
+        # Create test directory if it doesn't exist
+        mkdir -p tests
+        # Run basic health check test
+        python -c "
+        import pytest
+        import sys
+        from pathlib import Path
+        
+        # Create a basic test if none exists
+        test_file = Path('tests/test_basic.py')
+        if not test_file.exists():
+            test_file.write_text('''
+import pytest
+from fastapi.testclient import TestClient
+from app.main import app
+
+client = TestClient(app)
+
+def test_health():
+    response = client.get(\"/health/liveness\")
+    assert response.status_code == 200
+
+def test_root_redirect():
+    response = client.get(\"/\", follow_redirects=False)
+    assert response.status_code == 307
+            ''')
+        "
+        pytest tests/ -v
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build Docker image
+      run: |
+        docker build -t k8s-resource-monitor:test .
+        
+    - name: Test Docker image
+      run: |
+        # Create minimal test environment
+        echo "PROMETHEUS_URL=http://localhost:9090" > .env.test
+        echo "K8S_IN_CLUSTER=false" >> .env.test
+        
+        # Start container
+        docker run -d --name test-container \
+          --env-file .env.test \
+          -p 8080:8000 \
+          k8s-resource-monitor:test
+          
+        # Wait for container to start
+        sleep 10
+        
+        # Test health endpoint
+        curl -f http://localhost:8080/health/liveness || exit 1
+        
+        # Cleanup
+        docker stop test-container
+        docker rm test-container
