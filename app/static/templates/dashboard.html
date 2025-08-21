@@ -30,6 +30,102 @@
 .sortable:hover {
     background-color: rgba(0, 0, 0, 0.05);
 }
+
+.nav-tabs {
+    border-bottom: 3px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.nav-tabs .nav-link {
+    border: 2px solid transparent;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 12px 20px;
+    margin-right: 0.25rem;
+    color: #495057;
+    background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    background: linear-gradient(45deg, #ffffff 0%, #f8f9fa 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-tabs .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(45deg, #0d6efd 0%, #0056b3 100%);
+    border-color: #0d6efd;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Unified filter styling */
+.filter-container {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.filter-container .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.filter-container .form-label i {
+    margin-right: 8px;
+    color: #0d6efd;
+}
+
+.filter-container .form-control,
+.filter-container .form-select {
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+.filter-container .form-control:focus,
+.filter-container .form-select:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    background: #ffffff;
+}
+
+.filter-special {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border: 2px solid #ffc107;
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.filter-special:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+}
+
+.filter-special .form-check-label {
+    color: #856404;
+    font-weight: 600;
+}
+
+.filter-special .form-check-input:checked {
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
 </style>
 {% endblock %}
 
@@ -130,20 +226,42 @@
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">CPU Utilization Trends</div>
+                <div class="card-header">CPU vs Requests (%)</div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <canvas id="cpuChart"></canvas>
+                        <canvas id="cpuRequestsChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header">Memory Utilization Trends</div>
+                <div class="card-header">CPU vs Limits (%)</div>
                 <div class="card-body">
                     <div class="chart-container">
-                        <canvas id="memoryChart"></canvas>
+                        <canvas id="cpuLimitsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Memory vs Requests (%)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="memoryRequestsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Memory vs Limits (%)</div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="memoryLimitsChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -151,30 +269,40 @@
     </div>
 
     <!-- Filters -->
-    <div class="row mb-3">
-        <div class="col-md-4">
-            <label for="podSearch" class="form-label">Search Pod Name:</label>
-            <input type="text" id="podSearch" class="form-control" placeholder="Enter pod name..." value="{{ search }}">
-        </div>
-        <div class="col-md-4">
-            <label for="namespaceFilter" class="form-label">Filter by Namespace:</label>
-            <select id="namespaceFilter" class="form-select">
-                <option value="all" {% if selected_namespace == "all" %}selected{% endif %}>All Namespaces</option>
-                {% for ns in namespaces %}
-                <option value="{{ ns }}" {% if selected_namespace == ns %}selected{% endif %}>{{ ns }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Data Completeness:</label>
-            <div class="card border-warning bg-light p-2">
-                <div class="form-check">
-                    <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
-                    <label class="form-check-label fw-bold" for="hideIncompleteData">
-                        <i class="fas fa-filter me-1"></i>
-                        Hide incomplete records
-                    </label>
-                    <small class="text-muted d-block">Excludes records missing requests/limits</small>
+    <div class="filter-container">
+        <div class="row">
+            <div class="col-md-4">
+                <label for="podSearch" class="form-label">
+                    <i class="fas fa-search"></i>
+                    Search Pod Name:
+                </label>
+                <input type="text" id="podSearch" class="form-control" placeholder="Enter pod name..." value="{{ search }}">
+            </div>
+            <div class="col-md-4">
+                <label for="namespaceFilter" class="form-label">
+                    <i class="fas fa-layer-group"></i>
+                    Filter by Namespace:
+                </label>
+                <select id="namespaceFilter" class="form-select">
+                    <option value="all" {% if selected_namespace == "all" %}selected{% endif %}>All Namespaces</option>
+                    {% for ns in namespaces %}
+                    <option value="{{ ns }}" {% if selected_namespace == ns %}selected{% endif %}>{{ ns }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">
+                    <i class="fas fa-filter"></i>
+                    Data Completeness:
+                </label>
+                <div class="filter-special">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="hideIncompleteData" value="true" {% if hide_incomplete %}checked{% endif %}>
+                        <label class="form-check-label" for="hideIncompleteData">
+                            Hide incomplete records
+                        </label>
+                        <small class="text-muted d-block">Excludes records missing requests/limits</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -214,27 +342,29 @@
                         <table id="cpuRequestsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_request_cores">CPU Requested (m) {% if sort_column == 'cpu_request_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_usage_cores">CPU Actual (m) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th>Recommendations</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for row in cpu_requests_data %}
                                 <tr>
-                                    <td>{{ row.pod_name }}</td>
+                                    <td>{{ row.node_name or 'N/A' }}</td>
                                     <td>{{ row.namespace }}</td>
+                                    <td>{{ row.pod_name }}</td>
                                     <td>{{ row.container_name }}</td>
+                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.requested }}</td>
                                     <td>{{ row.actual }}</td>
                                     <td>{{ row.utilization_pct }}</td>
-                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
-                                    <td>{{ row.node_name or 'N/A' }}</td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'cpu-requests', '{{ row.actual }}', '{{ row.requested }}', '', '', '')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -252,27 +382,29 @@
                         <table id="cpuLimitsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_limit_cores">CPU Limit (m) {% if sort_column == 'cpu_limit_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_usage_cores">CPU Actual (m) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th>Recommendations</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for row in cpu_limits_data %}
                                 <tr>
-                                    <td>{{ row.pod_name }}</td>
+                                    <td>{{ row.node_name or 'N/A' }}</td>
                                     <td>{{ row.namespace }}</td>
+                                    <td>{{ row.pod_name }}</td>
                                     <td>{{ row.container_name }}</td>
+                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.limit }}</td>
                                     <td>{{ row.actual }}</td>
                                     <td>{{ row.utilization_pct }}</td>
-                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
-                                    <td>{{ row.node_name or 'N/A' }}</td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'cpu-limits', '{{ row.actual }}', '', '{{ row.limit }}', '', '')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -290,27 +422,29 @@
                         <table id="memoryRequestsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_request_bytes">Memory Requested {% if sort_column == 'memory_request_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_usage_bytes">Memory Actual {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th>Recommendations</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for row in memory_requests_data %}
                                 <tr>
-                                    <td>{{ row.pod_name }}</td>
+                                    <td>{{ row.node_name or 'N/A' }}</td>
                                     <td>{{ row.namespace }}</td>
+                                    <td>{{ row.pod_name }}</td>
                                     <td>{{ row.container_name }}</td>
+                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.requested }}</td>
                                     <td>{{ row.actual }}</td>
                                     <td>{{ row.utilization_pct }}</td>
-                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
-                                    <td>{{ row.node_name or 'N/A' }}</td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'memory-requests', '', '', '', '{{ row.actual }}', '{{ row.requested }}')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -328,27 +462,29 @@
                         <table id="memoryLimitsTable" class="table table-striped table-hover" style="width:100%">
                             <thead>
                                 <tr>
-                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="namespace">Namespace {% if sort_column == 'namespace' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_name">Pod Name {% if sort_column == 'pod_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="container_name">Container {% if sort_column == 'container_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_limit_bytes">Memory Limit {% if sort_column == 'memory_limit_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_usage_bytes">Memory Actual {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="utilization_pct">Utilization % {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="node_name">Node {% if sort_column == 'node_name' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th>Recommendations</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for row in memory_limits_data %}
                                 <tr>
-                                    <td>{{ row.pod_name }}</td>
+                                    <td>{{ row.node_name or 'N/A' }}</td>
                                     <td>{{ row.namespace }}</td>
+                                    <td>{{ row.pod_name }}</td>
                                     <td>{{ row.container_name }}</td>
+                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.limit }}</td>
                                     <td>{{ row.actual }}</td>
                                     <td>{{ row.utilization_pct }}</td>
-                                    <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
-                                    <td>{{ row.node_name or 'N/A' }}</td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'memory-limits', '', '', '', '{{ row.actual }}', '', '{{ row.limit }}')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -387,6 +523,105 @@
             {% endif %}
         </ul>
     </nav>
+
+    <!-- Recommendations Modal -->
+    <div class="modal fade" id="recommendationsModal" tabindex="-1" aria-labelledby="recommendationsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="recommendationsModalLabel">
+                        <i class="fas fa-lightbulb text-warning"></i>
+                        Resource Recommendations
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Pod:</strong> <span id="modal-pod-name"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Container:</strong> <span id="modal-container-name"></span>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>Namespace:</strong> <span id="modal-namespace"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>Type:</strong> <span id="modal-type"></span>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0"><i class="fas fa-chart-line"></i> Current Usage</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>CPU:</strong> <span id="current-cpu" class="text-primary"></span>
+                                    </div>
+                                    <div>
+                                        <strong>Memory:</strong> <span id="current-memory" class="text-primary"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0"><i class="fas fa-thumbs-up"></i> Recommended Resources</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        <strong>CPU Request:</strong> <span id="recommended-cpu-request" class="text-success"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>CPU Limit:</strong> <span id="recommended-cpu-limit" class="text-success"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <strong>Memory Request:</strong> <span id="recommended-memory-request" class="text-success"></span>
+                                    </div>
+                                    <div>
+                                        <strong>Memory Limit:</strong> <span id="recommended-memory-limit" class="text-success"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Rationale:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>CPU recommendations are rounded to 50m increments (up to 1000m) or 100m increments (above 1000m)</li>
+                            <li>Memory recommendations are rounded to 64Mi/128Mi/0.1Gi based on usage patterns</li>
+                            <li>Limits are set to ensure actual usage stays within 80% of the limit</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-code"></i> YAML Configuration</h6>
+                        </div>
+                        <div class="card-body">
+                            <pre id="yaml-config" class="bg-light p-3" style="border-radius: 5px; font-size: 0.9rem;"></pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="copyYamlToClipboard()">
+                        <i class="fas fa-copy"></i> Copy YAML
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
