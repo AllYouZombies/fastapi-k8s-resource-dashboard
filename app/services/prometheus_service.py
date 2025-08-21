@@ -84,9 +84,8 @@ sum(rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m]))
 
     async def get_pod_memory_usage(self) -> Dict[str, int]:
         """Get memory usage by pod."""
-        query = """
-        sum(container_memory_working_set_bytes{container!="POD",container!=""}) by (namespace, pod)
-        """
+        query = """sum(container_memory_working_set_bytes{
+        container!="POD",container!=""}) by (namespace, pod)"""
 
         try:
             data = await self.query_prometheus(query)

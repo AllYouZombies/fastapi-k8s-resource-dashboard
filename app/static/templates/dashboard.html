@@ -31,38 +31,6 @@
     background-color: rgba(0, 0, 0, 0.05);
 }
 
-.nav-tabs {
-    border-bottom: 3px solid #dee2e6;
-    margin-bottom: 1rem;
-}
-
-.nav-tabs .nav-link {
-    border: 2px solid transparent;
-    font-weight: 600;
-    font-size: 1.1rem;
-    padding: 12px 20px;
-    margin-right: 0.25rem;
-    color: #495057;
-    background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 8px 8px 0 0;
-    transition: all 0.3s ease;
-}
-
-.nav-tabs .nav-link:hover {
-    border-color: #0d6efd;
-    color: #0d6efd;
-    background: linear-gradient(45deg, #ffffff 0%, #f8f9fa 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.nav-tabs .nav-link.active {
-    color: #ffffff;
-    background: linear-gradient(45deg, #0d6efd 0%, #0056b3 100%);
-    border-color: #0d6efd;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(13, 110, 253, 0.3);
-}
 
 /* Unified filter styling */
 .filter-container {
@@ -207,6 +175,134 @@
     box-shadow: 0 3px 8px rgba(40, 167, 69, 0.3);
     background: linear-gradient(45deg, #34ce57 0%, #28a745 100%);
 }
+
+/* Enhanced summary cards styling */
+.summary-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+.summary-card .card-body {
+    padding: 1.5rem;
+    position: relative;
+}
+
+.summary-card .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+}
+
+.summary-card .card-title i {
+    font-size: 1.3rem;
+    margin-right: 10px;
+    opacity: 0.9;
+}
+
+.summary-metric {
+    padding: 10px 0;
+    position: relative;
+}
+
+.summary-metric::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 60%;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.summary-metric:last-child::after {
+    display: none;
+}
+
+.summary-metric .metric-value {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.summary-metric .metric-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 5px;
+}
+
+/* Enhanced tab navigation styling */
+.nav-tabs {
+    border-bottom: 3px solid #dee2e6;
+    margin-bottom: 1rem;
+    justify-content: space-between;
+}
+
+.nav-tabs .nav-item {
+    flex: 1;
+}
+
+.nav-tabs .nav-link {
+    border: 2px solid transparent;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 15px 10px;
+    margin-right: 0;
+    color: #495057;
+    background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px 12px 0 0;
+    transition: all 0.3s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70px;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    background: linear-gradient(45deg, #ffffff 0%, #f8f9fa 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-tabs .nav-link.active {
+    color: #ffffff;
+    background: linear-gradient(45deg, #0d6efd 0%, #0056b3 100%);
+    border-color: #0d6efd;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(13, 110, 253, 0.3);
+}
+
+.nav-tabs .nav-link i {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.nav-tabs .nav-link span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: block;
+}
 </style>
 {% endblock %}
 
@@ -226,34 +322,40 @@
     <!-- Summary Cards -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <div class="card text-white bg-primary">
+            <div class="card summary-card text-white bg-primary">
                 <div class="card-body">
-                    <h5 class="card-title">CPU Resources</h5>
+                    <h5 class="card-title">
+                        <i class="fas fa-microchip"></i>
+                        CPU Resources
+                    </h5>
                     <div class="row">
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_requests) }}</h3>
-                            <small>Requests (cores)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.total_cpu_requests) }}</h3>
+                            <div class="metric-label">Requests (cores)</div>
                         </div>
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_limits) }}</h3>
-                            <small>Limits (cores)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.total_cpu_limits) }}</h3>
+                            <div class="metric-label">Limits (cores)</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card text-white bg-success">
+            <div class="card summary-card text-white bg-success">
                 <div class="card-body">
-                    <h5 class="card-title">Memory Resources</h5>
+                    <h5 class="card-title">
+                        <i class="fas fa-memory"></i>
+                        Memory Resources
+                    </h5>
                     <div class="row">
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_requests_gb) }}</h3>
-                            <small>Requests (GB)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.total_memory_requests_gb) }}</h3>
+                            <div class="metric-label">Requests (GB)</div>
                         </div>
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_limits_gb) }}</h3>
-                            <small>Limits (GB)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.total_memory_limits_gb) }}</h3>
+                            <div class="metric-label">Limits (GB)</div>
                         </div>
                     </div>
                 </div>
@@ -264,34 +366,40 @@
     <!-- Usage and Underutilization Cards -->
     <div class="row mb-4">
         <div class="col-md-6">
-            <div class="card text-white bg-dark">
+            <div class="card summary-card text-white bg-dark">
                 <div class="card-body">
-                    <h5 class="card-title">Actual Usage</h5>
+                    <h5 class="card-title">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Actual Usage
+                    </h5>
                     <div class="row">
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_usage) }}</h3>
-                            <small>CPU (cores)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.total_cpu_usage) }}</h3>
+                            <div class="metric-label">CPU (cores)</div>
                         </div>
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_usage_gb) }}</h3>
-                            <small>Memory (GB)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.total_memory_usage_gb) }}</h3>
+                            <div class="metric-label">Memory (GB)</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card text-white bg-danger">
+            <div class="card summary-card text-white bg-danger">
                 <div class="card-body">
-                    <h5 class="card-title">Wasted Resources</h5>
+                    <h5 class="card-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Wasted Resources
+                    </h5>
                     <div class="row">
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.cpu_requests_underutilization) }}</h3>
-                            <small>CPU (cores)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.cpu_requests_underutilization) }}</h3>
+                            <div class="metric-label">CPU (cores)</div>
                         </div>
-                        <div class="col-6 text-center">
-                            <h3 class="card-text">{{ "%.1f"|format(summary_stats.memory_requests_underutilization_gb) }}</h3>
-                            <small>Memory (GB)</small>
+                        <div class="col-6 text-center summary-metric">
+                            <h3 class="metric-value">{{ "%.1f"|format(summary_stats.memory_requests_underutilization_gb) }}</h3>
+                            <div class="metric-label">Memory (GB)</div>
                         </div>
                     </div>
                 </div>
@@ -385,25 +493,29 @@
     </div>
 
     <!-- Tab Navigation -->
-    <ul class="nav nav-tabs" id="resourceTabs" role="tablist">
+    <ul class="nav nav-tabs d-flex" id="resourceTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="cpu-requests-tab" data-bs-toggle="tab" data-bs-target="#cpu-requests" type="button" role="tab">
-                CPU Requests vs Usage
+                <i class="fas fa-microchip"></i>
+                <span>CPU Requests</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="cpu-limits-tab" data-bs-toggle="tab" data-bs-target="#cpu-limits" type="button" role="tab">
-                CPU Limits vs Usage
+                <i class="fas fa-gauge-high"></i>
+                <span>CPU Limits</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="memory-requests-tab" data-bs-toggle="tab" data-bs-target="#memory-requests" type="button" role="tab">
-                Memory Requests vs Usage
+                <i class="fas fa-memory"></i>
+                <span>Memory Requests</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="memory-limits-tab" data-bs-toggle="tab" data-bs-target="#memory-limits" type="button" role="tab">
-                Memory Limits vs Usage
+                <i class="fas fa-hdd"></i>
+                <span>Memory Limits</span>
             </button>
         </li>
     </ul>

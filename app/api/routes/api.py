@@ -1,19 +1,13 @@
-from datetime import datetime
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
-from ...core.config import Settings
 from ...core.dependencies import get_database_session, get_settings_dependency
 from ...models.database import ResourceMetric, ResourceSummary
-from ...models.schemas import (
-    ChartDataResponse,
-    MetricsResponse,
-    ResourceMetricResponse,
-    ResourceSummaryResponse,
-)
+from ...models.schemas import (ChartDataResponse, MetricsResponse,
+                               ResourceMetricResponse, ResourceSummaryResponse)
 
 router = APIRouter()
 

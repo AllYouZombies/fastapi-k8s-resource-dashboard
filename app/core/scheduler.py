@@ -38,9 +38,8 @@ class TaskScheduler:
         )
 
         self.scheduler.start()
-        logger.info(
-            f"Scheduler started with {self.settings.collection_interval_minutes} minute intervals"
-        )
+        interval = self.settings.collection_interval_minutes
+        logger.info(f"Scheduler started with {interval} minute intervals")
 
     def stop(self):
         """Stop the scheduler gracefully."""

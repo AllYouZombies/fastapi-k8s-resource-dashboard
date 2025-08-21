@@ -396,7 +396,7 @@ async def get_summary_stats(
     """API endpoint for summary statistics."""
     settings = get_settings()
 
-    # Get filtered data for summary stats - exclude inactive pods and excluded namespaces
+    # Get filtered data for summary stats - exclude inactive pods and excluded ns
     all_query = db.query(ResourceMetric).filter(
         ResourceMetric.timestamp
         == db.query(func.max(ResourceMetric.timestamp)).scalar(),
@@ -500,7 +500,7 @@ async def get_chart_data(
         total_memory_requests = sum(m.memory_request_bytes or 0 for m in metrics)
         total_memory_limits = sum(m.memory_limit_bytes or 0 for m in metrics)
 
-        # Calculate percentages based on historical requests/limits at this point in time
+        # Calculate percentages based on historical requests/limits
         cpu_pct_requests = (
             (total_cpu_usage / total_cpu_requests * 100)
             if total_cpu_requests > 0
@@ -626,7 +626,6 @@ async def get_resource_recommendations(
     db: Session = Depends(get_database_session),
 ):
     """API endpoint for resource recommendations based on historical data."""
-    from sqlalchemy import and_, func
 
     settings = get_settings()
 
@@ -787,10 +786,14 @@ def calculate_resource_recommendations(
             cpu_request_millicores, cpu_limit_millicores, memory_request, memory_limit
         ),
         "rationale": {
-            "cpu_request": f"Based on current usage of {current_cpu_millicores}m, rounded to appropriate increment",
-            "cpu_limit": f"Based on max usage of {max_cpu_millicores}m with 25% headroom for spikes",
-            "memory_request": f"Based on current usage of {int(current_memory_mi)}Mi, rounded to appropriate increment",
-            "memory_limit": f"Based on max usage of {int(max_memory_mi)}Mi with 25% headroom for spikes",
+            "cpu_request": f"Based on current usage of {current_cpu_millicores}m, "
+            "rounded to appropriate increment",
+            "cpu_limit": f"Based on max usage of {max_cpu_millicores}m "
+            "with 25% headroom for spikes",
+            "memory_request": f"Based on current usage of {int(current_memory_mi)}Mi, "
+            "rounded to appropriate increment",
+            "memory_limit": f"Based on max usage of {int(max_memory_mi)}Mi "
+            "with 25% headroom for spikes",
         },
     }
 
