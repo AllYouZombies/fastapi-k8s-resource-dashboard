@@ -126,6 +126,12 @@ function setupTableControls() {
 
 // Initialize Chart.js charts
 function initializeCharts() {
+    // Check if Chart.js is loaded
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js is not loaded');
+        return;
+    }
+    
     // CPU vs Requests Chart
     const cpuRequestsCtx = document.getElementById('cpuRequestsChart').getContext('2d');
     cpuRequestsChart = new Chart(cpuRequestsCtx, {

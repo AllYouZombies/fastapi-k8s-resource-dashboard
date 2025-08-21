@@ -86,7 +86,7 @@ This is a FastAPI-based Kubernetes resource monitoring application that compares
 
 5. **Web Interface** (`app/api/routes/dashboard.py`)
    - 4 comparative tables with logical column order: Node → Namespace → Pod → Container → Status → Resource Data
-   - Historical data display: min/current/max values for actual usage and utilization percentages
+   - Historical data display: current/max values for actual usage and utilization percentages
    - Resource recommendations system with backend API endpoint (`/api/recommendations/{pod_name}/{container_name}`)
    - Real-time charts: 4 separate charts for CPU/Memory vs requests/limits percentages
    - AJAX-based interactions without page reloads
@@ -99,7 +99,7 @@ This is a FastAPI-based Kubernetes resource monitoring application that compares
 2. **K8s Data**: Fetch pod specs (requests/limits) excluding system namespaces  
 3. **Prometheus Data**: Query actual CPU/memory usage metrics
 4. **Storage**: Combined data in SQLite with automatic cleanup
-5. **Historical Analysis**: Calculate min/max/current values across entire pod lifecycle for recommendations
+5. **Historical Analysis**: Calculate current/max values across entire pod lifecycle for recommendations
 6. **Presentation**: Web dashboard with interactive tables, charts, and smart resource recommendations
 
 ### Key Configuration
@@ -108,6 +108,7 @@ Essential environment variables in `.env`:
 - `PROMETHEUS_URL`: Prometheus server endpoint (required)
 - `K8S_IN_CLUSTER`: Boolean for in-cluster vs external access
 - `KUBECONFIG_PATH`: Path to kubeconfig file
+- `K8S_CONTEXT`: Specific Kubernetes context to use (prevents data corruption when host context changes)
 - `HOST_UID`/`HOST_GID`: Host user credentials for kubeconfig access
 - `COLLECTION_INTERVAL_MINUTES`: Collection frequency
 - `RETENTION_DAYS`: Data retention period
