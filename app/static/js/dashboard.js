@@ -560,6 +560,190 @@ function updateUrlParams(params) {
     window.history.replaceState({}, '', url);
 }
 
+// Resource recommendation functions
+function showRecommendations(podName, containerName, namespace, type, cpuActual, cpuRequest, cpuLimit, memoryActual, memoryRequest, memoryLimit) {
+    let actualCpu = '';
+    let actualMemory = '';
+    
+    // Determine which values to use based on table type
+    if (type.includes('cpu')) {
+        actualCpu = cpuActual;
+        actualMemory = '0Mi'; // We don't have memory data in CPU tables
+    } else if (type.includes('memory')) {
+        actualCpu = '0m'; // We don't have CPU data in memory tables
+        actualMemory = memoryActual;
+    }
+    
+    // Parse actual values
+    const actualCpuMillicores = parseCpuValue(actualCpu);
+    const actualMemoryBytes = parseMemoryValue(actualMemory);
+    
+    // Calculate recommendations
+    const recommendations = calculateResourceRecommendations(actualCpuMillicores, actualMemoryBytes, type);
+    
+    // Populate modal
+    document.getElementById('modal-pod-name').textContent = podName;
+    document.getElementById('modal-container-name').textContent = containerName;
+    document.getElementById('modal-namespace').textContent = namespace;
+    document.getElementById('modal-type').textContent = type.replace('-', ' ').toUpperCase();
+    
+    // Current usage - only show relevant values based on table type
+    if (type.includes('cpu')) {
+        document.getElementById('current-cpu').textContent = actualCpu || '0m';
+        document.getElementById('current-memory').textContent = 'N/A (CPU table)';
+    } else {
+        document.getElementById('current-cpu').textContent = 'N/A (Memory table)';
+        document.getElementById('current-memory').textContent = actualMemory || '0Mi';
+    }
+    
+    // Recommendations - only show relevant recommendations based on table type
+    if (type.includes('cpu')) {
+        document.getElementById('recommended-cpu-request').textContent = recommendations.cpuRequest + 'm';
+        document.getElementById('recommended-cpu-limit').textContent = recommendations.cpuLimit + 'm';
+        document.getElementById('recommended-memory-request').textContent = 'N/A (CPU table)';
+        document.getElementById('recommended-memory-limit').textContent = 'N/A (CPU table)';
+    } else {
+        document.getElementById('recommended-cpu-request').textContent = 'N/A (Memory table)';
+        document.getElementById('recommended-cpu-limit').textContent = 'N/A (Memory table)';
+        document.getElementById('recommended-memory-request').textContent = recommendations.memoryRequest;
+        document.getElementById('recommended-memory-limit').textContent = recommendations.memoryLimit;
+    }
+    
+    // Generate YAML
+    const yamlConfig = generateYamlConfig(recommendations, type);
+    document.getElementById('yaml-config').textContent = yamlConfig;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('recommendationsModal'));
+    modal.show();
+}
+
+function parseCpuValue(cpuStr) {
+    if (!cpuStr || cpuStr === 'Not set' || cpuStr === '0m') return 0;
+    // Remove 'm' suffix and convert to number
+    return parseInt(cpuStr.replace('m', '')) || 0;
+}
+
+function parseMemoryValue(memoryStr) {
+    if (!memoryStr || memoryStr === 'Not set' || memoryStr === '0Mi') return 0;
+    
+    // Parse memory with different suffixes
+    const match = memoryStr.match(/^(\d+)(Mi|Gi|Ki|M|G|K)?$/);
+    if (!match) return 0;
+    
+    const value = parseInt(match[1]);
+    const suffix = match[2] || '';
+    
+    switch (suffix) {
+        case 'Gi': case 'G': return value * 1024 * 1024 * 1024;
+        case 'Mi': case 'M': return value * 1024 * 1024;
+        case 'Ki': case 'K': return value * 1024;
+        default: return value; // bytes
+    }
+}
+
+function calculateResourceRecommendations(actualCpuMillicores, actualMemoryBytes, type) {
+    // CPU recommendations
+    let cpuRequest, cpuLimit;
+    
+    if (actualCpuMillicores < 50) {
+        cpuRequest = 50; // Minimum 50m
+    } else if (actualCpuMillicores <= 1000) {
+        // Round to nearest 50m increment
+        cpuRequest = Math.ceil(actualCpuMillicores / 50) * 50;
+    } else {
+        // Round to nearest 100m increment for values above 1000m
+        cpuRequest = Math.ceil(actualCpuMillicores / 100) * 100;
+    }
+    
+    // CPU limit calculation - ensure actual usage is within 80% of limit
+    // So limit = actual / 0.8, then round up using same logic
+    const targetCpuLimit = Math.ceil(actualCpuMillicores / 0.8);
+    if (targetCpuLimit <= 1000) {
+        cpuLimit = Math.ceil(targetCpuLimit / 50) * 50;
+    } else {
+        cpuLimit = Math.ceil(targetCpuLimit / 100) * 100;
+    }
+    
+    // Memory recommendations
+    let memoryRequest, memoryLimit;
+    const actualMemoryMi = actualMemoryBytes / (1024 * 1024); // Convert to Mi
+    
+    if (actualMemoryMi < 10) {
+        memoryRequest = '64Mi'; // Minimum 64Mi
+    } else if (actualMemoryMi < 512) {
+        // Round up to 64Mi increments
+        const rounded = Math.ceil(actualMemoryMi / 64) * 64;
+        memoryRequest = rounded + 'Mi';
+    } else if (actualMemoryMi < 1000) {
+        // Round up to 128Mi increments
+        const rounded = Math.ceil(actualMemoryMi / 128) * 128;
+        memoryRequest = rounded + 'Mi';
+    } else {
+        // Round up to 0.1Gi increments
+        const actualMemoryGi = actualMemoryMi / 1024;
+        const rounded = Math.ceil(actualMemoryGi * 10) / 10; // Round to 0.1Gi
+        memoryRequest = rounded + 'Gi';
+    }
+    
+    // Memory limit calculation - ensure actual usage is within 80% of limit
+    const targetMemoryMi = Math.ceil(actualMemoryMi / 0.8);
+    if (targetMemoryMi < 512) {
+        const rounded = Math.ceil(targetMemoryMi / 64) * 64;
+        memoryLimit = rounded + 'Mi';
+    } else if (targetMemoryMi < 1000) {
+        const rounded = Math.ceil(targetMemoryMi / 128) * 128;
+        memoryLimit = rounded + 'Mi';
+    } else {
+        const targetMemoryGi = targetMemoryMi / 1024;
+        const rounded = Math.ceil(targetMemoryGi * 10) / 10;
+        memoryLimit = rounded + 'Gi';
+    }
+    
+    return {
+        cpuRequest,
+        cpuLimit,
+        memoryRequest,
+        memoryLimit
+    };
+}
+
+function generateYamlConfig(recommendations, type) {
+    if (type.includes('cpu')) {
+        return `resources:
+  requests:
+    cpu: "${recommendations.cpuRequest}m"
+  limits:
+    cpu: "${recommendations.cpuLimit}m"`;
+    } else {
+        return `resources:
+  requests:
+    memory: "${recommendations.memoryRequest}"
+  limits:
+    memory: "${recommendations.memoryLimit}"`;
+    }
+}
+
+function copyYamlToClipboard() {
+    const yamlContent = document.getElementById('yaml-config').textContent;
+    navigator.clipboard.writeText(yamlContent).then(() => {
+        // Show success message
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        button.classList.remove('btn-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-primary');
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+    });
+}
+
 // Cleanup on page unload
 window.addEventListener('beforeunload', () => {
     stopAutoRefresh();
