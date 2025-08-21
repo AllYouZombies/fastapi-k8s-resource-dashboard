@@ -8,6 +8,7 @@ ENV HOST_UID=${HOST_UID} \
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -25,8 +26,13 @@ RUN chown -R appuser:appuser /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy application code and scripts
 COPY app/ app/
+COPY scripts/ scripts/
+
+# Download external assets for offline use
+RUN chmod +x scripts/download-assets.sh && \
+    ./scripts/download-assets.sh
 
 # Expose port
 EXPOSE 8000
