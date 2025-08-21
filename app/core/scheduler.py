@@ -1,9 +1,11 @@
+import logging
+from contextlib import asynccontextmanager
+
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from contextlib import asynccontextmanager
+
 from ..services.collector_service import ResourceCollectorService
 from .config import get_settings
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -32,11 +34,13 @@ class TaskScheduler:
             name="Kubernetes Resource Collection",
             replace_existing=True,
             max_instances=1,  # Prevent overlapping runs
-            coalesce=True
+            coalesce=True,
         )
 
         self.scheduler.start()
-        logger.info(f"Scheduler started with {self.settings.collection_interval_minutes} minute intervals")
+        logger.info(
+            f"Scheduler started with {self.settings.collection_interval_minutes} minute intervals"
+        )
 
     def stop(self):
         """Stop the scheduler gracefully."""

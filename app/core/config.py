@@ -1,6 +1,7 @@
-from pydantic_settings import BaseSettings
-from typing import Optional
 from functools import lru_cache
+from typing import Optional
+
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -33,12 +34,14 @@ class Settings(BaseSettings):
     @property
     def excluded_namespaces_list(self):
         """Return excluded_namespaces as list"""
-        return [ns.strip() for ns in self.excluded_namespaces.split(',') if ns.strip()]
+        return [ns.strip() for ns in self.excluded_namespaces.split(",") if ns.strip()]
 
     @property
     def cors_origins_list(self):
         """Return cors_origins as list"""
-        return [origin.strip() for origin in self.cors_origins.split(',') if origin.strip()]
+        return [
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
+        ]
 
     class Config:
         env_file = ".env"

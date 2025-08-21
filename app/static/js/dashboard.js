@@ -1,7 +1,7 @@
 let cpuChart, memoryChart;
 let tables = {};
 
-// Initialize DataTables for all resource tables
+// Initialize tables with server-side sorting
 function initializeTables() {
     const tableConfigs = {
         'cpuRequestsTable': 'CPU Requests vs Usage',
@@ -12,27 +12,20 @@ function initializeTables() {
 
     Object.keys(tableConfigs).forEach(tableId => {
         if (document.getElementById(tableId)) {
+            // Disable DataTables sorting and use server-side sorting instead
             tables[tableId] = $(`#${tableId}`).DataTable({
-                pageLength: 20,
-                lengthMenu: [[10, 20, 50, 100, -1], [10, 20, 50, 100, "All"]],
-                searching: true,
-                ordering: true,
-                order: [[0, 'asc']],
-                stateSave: true,
-                stateDuration: 60 * 60,
+                paging: false,
+                searching: false,
+                ordering: false,
+                info: false,
                 responsive: true,
-                columnDefs: [
-                    {
-                        targets: [3, 4, 5], // Resource columns
-                        type: "string"
-                    }
-                ],
                 language: {
-                    search: "Filter records:",
-                    lengthMenu: "Show _MENU_ entries",
-                    info: "Showing _START_ to _END_ of _TOTAL_ entries"
+                    emptyTable: "No data available"
                 }
             });
+            
+            // Add click handlers for column headers
+            addSortingHandlers(tableId);
         }
     });
 
@@ -40,25 +33,83 @@ function initializeTables() {
     setupTableControls();
 }
 
+// Add sorting click handlers to table headers
+function addSortingHandlers(tableId) {
+    const table = document.getElementById(tableId);
+    const headers = table.querySelectorAll('thead th');
+    
+    const columnMappings = {
+        0: 'pod_name',
+        1: 'namespace', 
+        2: 'container_name',
+        3: 'cpu_request_cores', // For requests tables
+        4: 'cpu_usage_cores',
+        5: null, // Utilization % is calculated
+        6: 'pod_phase',
+        7: 'node_name'
+    };
+    
+    // Adjust mapping for limits tables
+    if (tableId.includes('Limits')) {
+        if (tableId.includes('cpu')) {
+            columnMappings[3] = 'cpu_limit_cores';
+        } else {
+            columnMappings[3] = 'memory_limit_bytes';
+        }
+    } else if (tableId.includes('memory')) {
+        columnMappings[3] = 'memory_request_bytes';
+        columnMappings[4] = 'memory_usage_bytes';
+    }
+
+    headers.forEach((header, index) => {
+        const column = columnMappings[index];
+        if (column) {
+            header.style.cursor = 'pointer';
+            header.innerHTML += ' <i class="fas fa-sort"></i>';
+            
+            header.addEventListener('click', () => {
+                const url = new URL(window.location);
+                const currentSort = url.searchParams.get('sort_column');
+                const currentDirection = url.searchParams.get('sort_direction') || 'asc';
+                
+                let newDirection = 'asc';
+                if (currentSort === column && currentDirection === 'asc') {
+                    newDirection = 'desc';
+                }
+                
+                url.searchParams.set('sort_column', column);
+                url.searchParams.set('sort_direction', newDirection);
+                url.searchParams.set('page', '1'); // Reset to first page
+                
+                window.location = url.toString();
+            });
+        }
+    });
+}
+
 function setupTableControls() {
-    // Pod name search
+    // Pod name search with debounce
+    let searchTimeout;
     $('#podSearch').on('keyup', function() {
         const searchTerm = this.value;
-        Object.values(tables).forEach(table => {
-            table.columns(0).search(searchTerm).draw();
-        });
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            updateUrlParams({ 
+                search: searchTerm || null, 
+                page: 1 
+            });
+            window.location.reload();
+        }, 500);
     });
 
     // Namespace filter
     $('#namespaceFilter').on('change', function() {
         const selectedNamespace = this.value;
-        const searchTerm = selectedNamespace === 'all' ? '' : selectedNamespace;
-        Object.values(tables).forEach(table => {
-            table.columns(1).search(searchTerm).draw();
+        updateUrlParams({ 
+            namespace: selectedNamespace === 'all' ? null : selectedNamespace,
+            page: 1 
         });
-
-        // Update URL with new filter
-        updateUrlParams({ namespace: selectedNamespace === 'all' ? null : selectedNamespace });
+        window.location.reload();
     });
 }
 

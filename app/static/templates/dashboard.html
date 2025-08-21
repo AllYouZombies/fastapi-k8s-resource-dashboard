@@ -42,32 +42,76 @@
         <div class="col-md-3">
             <div class="card text-white bg-primary">
                 <div class="card-body">
-                    <h5 class="card-title">Total Pods</h5>
-                    <h2 class="card-text">{{ summary_stats.total_pods }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-success">
-                <div class="card-body">
-                    <h5 class="card-title">Running Pods</h5>
-                    <h2 class="card-text">{{ summary_stats.running_pods }}</h2>
+                    <h5 class="card-title">CPU Requests</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_requests) }}</h3>
+                    <small>cores total</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-info">
                 <div class="card-body">
-                    <h5 class="card-title">Avg CPU Usage</h5>
-                    <h2 class="card-text">{{ "%.2f"|format(summary_stats.avg_cpu_usage) }}</h2>
+                    <h5 class="card-title">CPU Limits</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_limits) }}</h3>
+                    <small>cores total</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h5 class="card-title">Memory Requests</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_requests_gb) }}</h3>
+                    <small>GB total</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-warning">
                 <div class="card-body">
-                    <h5 class="card-title">Avg Memory Usage</h5>
-                    <h2 class="card-text">{{ "%.0f"|format(summary_stats.avg_memory_usage / (1024**2)) }}Mi</h2>
+                    <h5 class="card-title">Memory Limits</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_limits_gb) }}</h3>
+                    <small>GB total</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage and Underutilization Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-dark">
+                <div class="card-body">
+                    <h5 class="card-title">CPU Usage</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_cpu_usage) }}</h3>
+                    <small>cores actual</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <h5 class="card-title">Memory Usage</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.total_memory_usage_gb) }}</h3>
+                    <small>GB actual</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">CPU Underutilization</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.cpu_requests_underutilization) }}</h3>
+                    <small>cores wasted (requests)</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-danger">
+                <div class="card-body">
+                    <h5 class="card-title">Memory Underutilization</h5>
+                    <h3 class="card-text">{{ "%.1f"|format(summary_stats.memory_requests_underutilization_gb) }}</h3>
+                    <small>GB wasted (requests)</small>
                 </div>
             </div>
         </div>
@@ -151,8 +195,8 @@
                                     <th>Pod Name</th>
                                     <th>Namespace</th>
                                     <th>Container</th>
-                                    <th>CPU Requested</th>
-                                    <th>CPU Actual</th>
+                                    <th>CPU Requested (m)</th>
+                                    <th>CPU Actual (m)</th>
                                     <th>Utilization %</th>
                                     <th>Status</th>
                                     <th>Node</th>
@@ -189,8 +233,8 @@
                                     <th>Pod Name</th>
                                     <th>Namespace</th>
                                     <th>Container</th>
-                                    <th>CPU Limit</th>
-                                    <th>CPU Actual</th>
+                                    <th>CPU Limit (m)</th>
+                                    <th>CPU Actual (m)</th>
                                     <th>Utilization %</th>
                                     <th>Status</th>
                                     <th>Node</th>
@@ -298,7 +342,7 @@
         <ul class="pagination justify-content-center">
             {% if current_page > 1 %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ current_page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}">Previous</a>
+                <a class="page-link" href="?page={{ current_page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Previous</a>
             </li>
             {% endif %}
             
@@ -309,14 +353,14 @@
                 </li>
                 {% elif page_num <= 5 or page_num > total_pages - 5 or (page_num >= current_page - 2 and page_num <= current_page + 2) %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_num }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}">{{ page_num }}</a>
+                    <a class="page-link" href="?page={{ page_num }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">{{ page_num }}</a>
                 </li>
                 {% endif %}
             {% endfor %}
             
             {% if current_page < total_pages %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ current_page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}">Next</a>
+                <a class="page-link" href="?page={{ current_page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Next</a>
             </li>
             {% endif %}
         </ul>

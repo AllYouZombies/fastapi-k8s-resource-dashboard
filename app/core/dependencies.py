@@ -1,7 +1,8 @@
 from fastapi import Depends
 from sqlalchemy.orm import Session
+
+from .config import Settings, get_settings
 from .database import get_db
-from .config import get_settings, Settings
 
 
 def get_settings_dependency() -> Settings:
