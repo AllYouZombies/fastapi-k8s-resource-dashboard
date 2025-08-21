@@ -126,6 +126,39 @@
     background-color: #ffc107;
     border-color: #ffc107;
 }
+
+/* Min/Current/Max value styling */
+.value-range {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.value-range .current {
+    font-weight: 600;
+    color: #212529;
+    margin: 0 4px;
+}
+
+.value-range .min-max {
+    font-weight: 300;
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.value-range .min-max:first-child {
+    margin-right: 4px;
+}
+
+.value-range .min-max:last-child {
+    margin-left: 4px;
+}
+
+/* Responsive value display - hide min/max on small screens */
+@media (max-width: 768px) {
+    .value-range .min-max {
+        display: none;
+    }
+}
 </style>
 {% endblock %}
 
@@ -362,9 +395,21 @@
                                     <td>{{ row.container_name }}</td>
                                     <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.requested }}</td>
-                                    <td>{{ row.actual }}</td>
-                                    <td>{{ row.utilization_pct }}</td>
-                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'cpu-requests', '{{ row.actual }}', '{{ row.requested }}', '', '', '')"><i class="fas fa-lightbulb"></i></button></td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.actual_min }}</span>
+                                            <span class="current">{{ row.actual_current }}</span>
+                                            <span class="min-max">{{ row.actual_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.utilization_pct_min }}</span>
+                                            <span class="current">{{ row.utilization_pct_current }}</span>
+                                            <span class="min-max">{{ row.utilization_pct_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -402,9 +447,21 @@
                                     <td>{{ row.container_name }}</td>
                                     <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.limit }}</td>
-                                    <td>{{ row.actual }}</td>
-                                    <td>{{ row.utilization_pct }}</td>
-                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'cpu-limits', '{{ row.actual }}', '', '{{ row.limit }}', '', '')"><i class="fas fa-lightbulb"></i></button></td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.actual_min }}</span>
+                                            <span class="current">{{ row.actual_current }}</span>
+                                            <span class="min-max">{{ row.actual_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.utilization_pct_min }}</span>
+                                            <span class="current">{{ row.utilization_pct_current }}</span>
+                                            <span class="min-max">{{ row.utilization_pct_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -442,9 +499,21 @@
                                     <td>{{ row.container_name }}</td>
                                     <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.requested }}</td>
-                                    <td>{{ row.actual }}</td>
-                                    <td>{{ row.utilization_pct }}</td>
-                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'memory-requests', '', '', '', '{{ row.actual }}', '{{ row.requested }}')"><i class="fas fa-lightbulb"></i></button></td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.actual_min }}</span>
+                                            <span class="current">{{ row.actual_current }}</span>
+                                            <span class="min-max">{{ row.actual_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.utilization_pct_min }}</span>
+                                            <span class="current">{{ row.utilization_pct_current }}</span>
+                                            <span class="min-max">{{ row.utilization_pct_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -482,9 +551,21 @@
                                     <td>{{ row.container_name }}</td>
                                     <td><span class="status-{{ row.status|lower }}">{{ row.status }}</span></td>
                                     <td>{{ row.limit }}</td>
-                                    <td>{{ row.actual }}</td>
-                                    <td>{{ row.utilization_pct }}</td>
-                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}', 'memory-limits', '', '', '', '{{ row.actual }}', '', '{{ row.limit }}')"><i class="fas fa-lightbulb"></i></button></td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.actual_min }}</span>
+                                            <span class="current">{{ row.actual_current }}</span>
+                                            <span class="min-max">{{ row.actual_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="value-range">
+                                            <span class="min-max">{{ row.utilization_pct_min }}</span>
+                                            <span class="current">{{ row.utilization_pct_current }}</span>
+                                            <span class="min-max">{{ row.utilization_pct_max }}</span>
+                                        </span>
+                                    </td>
+                                    <td><button class="btn btn-sm btn-outline-primary" onclick="showRecommendations('{{ row.pod_name }}', '{{ row.container_name }}', '{{ row.namespace }}')"><i class="fas fa-lightbulb"></i></button></td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -596,11 +677,12 @@
                     
                     <div class="alert alert-info mt-3">
                         <i class="fas fa-info-circle"></i>
-                        <strong>Rationale:</strong>
+                        <strong>Recommendation Logic:</strong>
                         <ul class="mb-0 mt-2">
-                            <li>CPU recommendations are rounded to 50m increments (up to 1000m) or 100m increments (above 1000m)</li>
-                            <li>Memory recommendations are rounded to 64Mi/128Mi/0.1Gi based on usage patterns</li>
-                            <li>Limits are set to ensure actual usage stays within 80% of the limit</li>
+                            <li><strong>Requests</strong> are based on current usage with appropriate rounding (50m/100m for CPU, 64Mi/128Mi/0.1Gi for memory)</li>
+                            <li><strong>Limits</strong> are based on historical maximum usage with 25% headroom to prevent OOMKilled</li>
+                            <li>Historical data shows min/current/max values to provide full context</li>
+                            <li>All values consider the entire pod lifecycle for accurate resource planning</li>
                         </ul>
                     </div>
                     

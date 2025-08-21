@@ -85,9 +85,13 @@ This is a FastAPI-based Kubernetes resource monitoring application that compares
    - Configurable retention period (default 7 days)
 
 5. **Web Interface** (`app/api/routes/dashboard.py`)
-   - 4 comparative tables: CPU/Memory requests vs usage, CPU/Memory limits vs usage
-   - Real-time charts with Chart.js
-   - Search, filtering, pagination (20 records/page)
+   - 4 comparative tables with logical column order: Node → Namespace → Pod → Container → Status → Resource Data
+   - Historical data display: min/current/max values for actual usage and utilization percentages
+   - Resource recommendations system with backend API endpoint (`/api/recommendations/{pod_name}/{container_name}`)
+   - Real-time charts: 4 separate charts for CPU/Memory vs requests/limits percentages
+   - AJAX-based interactions without page reloads
+   - Advanced filtering: search, namespace filter, incomplete data filter (enabled by default)
+   - Server-side sorting and pagination (20 records/page)
 
 ### Data Flow
 
@@ -95,7 +99,8 @@ This is a FastAPI-based Kubernetes resource monitoring application that compares
 2. **K8s Data**: Fetch pod specs (requests/limits) excluding system namespaces  
 3. **Prometheus Data**: Query actual CPU/memory usage metrics
 4. **Storage**: Combined data in SQLite with automatic cleanup
-5. **Presentation**: Web dashboard with interactive tables and charts
+5. **Historical Analysis**: Calculate min/max/current values across entire pod lifecycle for recommendations
+6. **Presentation**: Web dashboard with interactive tables, charts, and smart resource recommendations
 
 ### Key Configuration
 
@@ -129,10 +134,15 @@ Essential environment variables in `.env`:
 
 - **Async/await throughout**: All I/O operations are asynchronous
 - **Resource parsing**: Custom CPU (millicores) and memory (bytes with suffixes) parsers in KubernetesService
+- **Historical data analysis**: Backend calculations of min/max/current values for accurate resource recommendations
+- **Smart recommendations algorithm**: 
+  - Requests based on current usage with proper rounding (50m/100m for CPU, 64Mi/128Mi/0.1Gi for memory)
+  - Limits based on historical maximum with 25% headroom to prevent OOMKilled
 - **Context managers**: Proper cleanup for HTTP and K8s clients
 - **Environment-driven config**: Production-ready defaults with .env override
 - **Health checks**: Comprehensive health endpoints for monitoring
 - **Clean separation**: Services handle business logic, routes handle HTTP
+- **AJAX-first frontend**: Dynamic updates without page reloads for better UX
 - **Secure container setup**: Uses build args to create user with host UID/GID for kubeconfig access
 - **Flexible permissions**: Handles both in-cluster and external K8s access patterns
 
