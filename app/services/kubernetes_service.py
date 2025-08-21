@@ -1,6 +1,5 @@
-import asyncio
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from kubernetes.client.rest import ApiException
 from kubernetes_asyncio import client, config

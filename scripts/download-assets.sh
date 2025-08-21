@@ -39,7 +39,7 @@ done
 # Chart.js
 echo -e "${GREEN}✓${NC} Downloading Chart.js..."
 curl -s -o app/static/lib/chartjs/chart.min.js \
-  "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"
+  "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
 
 # DataTables CSS
 echo -e "${GREEN}✓${NC} Downloading DataTables CSS..."
