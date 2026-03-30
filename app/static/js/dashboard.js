@@ -15,6 +15,14 @@ function showChartError(canvasId, errorMessage) {
     }
 }
 
+// Utilization sort columns that are specific to a given tab
+const TAB_UTILIZATION_COLS = {
+    'cpu-requests': 'utilization_pct',
+    'cpu-limits': 'cpu_limit_utilization_pct',
+    'memory-requests': 'memory_request_utilization_pct',
+    'memory-limits': 'memory_limit_utilization_pct',
+};
+
 // Initialize tables with server-side sorting
 function initializeTables() {
     const tableConfigs = {
@@ -34,6 +42,32 @@ function initializeTables() {
 
     // Connect search and filter controls
     setupTableControls();
+
+    // Track active tab in URL
+    setupTabTracking();
+}
+
+// Update active_tab in URL when user switches tabs
+function setupTabTracking() {
+    document.querySelectorAll('#resourceTabs button[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            const newTab = e.target.getAttribute('data-bs-target').replace('#', '');
+            const params = new URLSearchParams(window.location.search);
+            const currentSort = params.get('sort_column');
+
+            // If the current sort is a utilization column belonging to a different tab, clear it
+            const colForNewTab = TAB_UTILIZATION_COLS[newTab];
+            const allUtilCols = Object.values(TAB_UTILIZATION_COLS);
+            if (currentSort && allUtilCols.includes(currentSort) && currentSort !== colForNewTab) {
+                params.delete('sort_column');
+                params.delete('sort_direction');
+            }
+
+            params.set('active_tab', newTab);
+            params.set('page', '1');
+            window.history.pushState({}, '', '/dashboard?' + params.toString());
+        });
+    });
 }
 
 // Add sorting click handlers to table headers

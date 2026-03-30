@@ -23,6 +23,7 @@ async def dashboard_home(
     sort_column: Optional[str] = Query(None),
     sort_direction: Optional[str] = Query("asc"),
     hide_incomplete: Optional[bool] = Query(True),
+    active_tab: Optional[str] = Query(None),
     db: Session = Depends(get_database_session),
 ):
     """Main dashboard page."""
@@ -61,14 +62,37 @@ async def dashboard_home(
     # Apply sorting
     if sort_column and sort_direction in ["asc", "desc"]:
         if sort_column == "utilization_pct":
-            # Special handling for utilization percentage (CPU requests)
-            cpu_utilization = ResourceMetric.cpu_usage_cores / func.nullif(
+            # CPU requests utilization: cpu_usage / cpu_request
+            utilization_expr = ResourceMetric.cpu_usage_cores / func.nullif(
                 ResourceMetric.cpu_request_cores, 0
             )
-            if sort_direction == "desc":
-                query = query.order_by(desc(cpu_utilization))
-            else:
-                query = query.order_by(cpu_utilization)
+            query = query.order_by(
+                desc(utilization_expr) if sort_direction == "desc" else utilization_expr
+            )
+        elif sort_column == "cpu_limit_utilization_pct":
+            # CPU limits utilization: cpu_usage / cpu_limit
+            utilization_expr = ResourceMetric.cpu_usage_cores / func.nullif(
+                ResourceMetric.cpu_limit_cores, 0
+            )
+            query = query.order_by(
+                desc(utilization_expr) if sort_direction == "desc" else utilization_expr
+            )
+        elif sort_column == "memory_request_utilization_pct":
+            # Memory requests utilization: memory_usage / memory_request
+            utilization_expr = ResourceMetric.memory_usage_bytes / func.nullif(
+                ResourceMetric.memory_request_bytes, 0
+            )
+            query = query.order_by(
+                desc(utilization_expr) if sort_direction == "desc" else utilization_expr
+            )
+        elif sort_column == "memory_limit_utilization_pct":
+            # Memory limits utilization: memory_usage / memory_limit
+            utilization_expr = ResourceMetric.memory_usage_bytes / func.nullif(
+                ResourceMetric.memory_limit_bytes, 0
+            )
+            query = query.order_by(
+                desc(utilization_expr) if sort_direction == "desc" else utilization_expr
+            )
         else:
             sort_attr = getattr(ResourceMetric, sort_column, None)
             if sort_attr:
@@ -383,6 +407,7 @@ async def dashboard_home(
             "sort_column": sort_column or "",
             "sort_direction": sort_direction,
             "hide_incomplete": hide_incomplete,
+            "active_tab": active_tab or "cpu-requests",
         },
     )
 

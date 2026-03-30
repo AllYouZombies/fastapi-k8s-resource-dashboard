@@ -495,25 +495,25 @@
     <!-- Tab Navigation -->
     <ul class="nav nav-tabs d-flex" id="resourceTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="cpu-requests-tab" data-bs-toggle="tab" data-bs-target="#cpu-requests" type="button" role="tab">
+            <button class="nav-link {% if active_tab == 'cpu-requests' %}active{% endif %}" id="cpu-requests-tab" data-bs-toggle="tab" data-bs-target="#cpu-requests" type="button" role="tab">
                 <i class="fas fa-microchip"></i>
                 <span>CPU Requests</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="cpu-limits-tab" data-bs-toggle="tab" data-bs-target="#cpu-limits" type="button" role="tab">
+            <button class="nav-link {% if active_tab == 'cpu-limits' %}active{% endif %}" id="cpu-limits-tab" data-bs-toggle="tab" data-bs-target="#cpu-limits" type="button" role="tab">
                 <i class="fas fa-gauge-high"></i>
                 <span>CPU Limits</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="memory-requests-tab" data-bs-toggle="tab" data-bs-target="#memory-requests" type="button" role="tab">
+            <button class="nav-link {% if active_tab == 'memory-requests' %}active{% endif %}" id="memory-requests-tab" data-bs-toggle="tab" data-bs-target="#memory-requests" type="button" role="tab">
                 <i class="fas fa-memory"></i>
                 <span>Memory Requests</span>
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="memory-limits-tab" data-bs-toggle="tab" data-bs-target="#memory-limits" type="button" role="tab">
+            <button class="nav-link {% if active_tab == 'memory-limits' %}active{% endif %}" id="memory-limits-tab" data-bs-toggle="tab" data-bs-target="#memory-limits" type="button" role="tab">
                 <i class="fas fa-hdd"></i>
                 <span>Memory Limits</span>
             </button>
@@ -523,7 +523,7 @@
     <!-- Tab Content -->
     <div class="tab-content" id="resourceTabsContent">
         <!-- CPU Requests vs Usage Table -->
-        <div class="tab-pane fade show active" id="cpu-requests" role="tabpanel">
+        <div class="tab-pane fade {% if active_tab == 'cpu-requests' %}show active{% endif %}" id="cpu-requests" role="tabpanel">
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -575,7 +575,7 @@
         </div>
 
         <!-- CPU Limits vs Usage Table -->
-        <div class="tab-pane fade" id="cpu-limits" role="tabpanel">
+        <div class="tab-pane fade {% if active_tab == 'cpu-limits' %}show active{% endif %}" id="cpu-limits" role="tabpanel">
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -589,7 +589,7 @@
                                     <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_limit_cores">CPU Limit (m) {% if sort_column == 'cpu_limit_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="cpu_usage_cores">CPU Actual (current/max) {% if sort_column == 'cpu_usage_cores' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="utilization_pct">Utilization % (current/max) {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="cpu_limit_utilization_pct">Utilization % (current/max) {% if sort_column == 'cpu_limit_utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Recommendations</th>
                                 </tr>
                             </thead>
@@ -627,7 +627,7 @@
         </div>
 
         <!-- Memory Requests vs Usage Table -->
-        <div class="tab-pane fade" id="memory-requests" role="tabpanel">
+        <div class="tab-pane fade {% if active_tab == 'memory-requests' %}show active{% endif %}" id="memory-requests" role="tabpanel">
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -641,7 +641,7 @@
                                     <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_request_bytes">Memory Requested {% if sort_column == 'memory_request_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_usage_bytes">Memory Actual (current/max) {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="utilization_pct">Utilization % (current/max) {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_request_utilization_pct">Utilization % (current/max) {% if sort_column == 'memory_request_utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Recommendations</th>
                                 </tr>
                             </thead>
@@ -679,7 +679,7 @@
         </div>
 
         <!-- Memory Limits vs Usage Table -->
-        <div class="tab-pane fade" id="memory-limits" role="tabpanel">
+        <div class="tab-pane fade {% if active_tab == 'memory-limits' %}show active{% endif %}" id="memory-limits" role="tabpanel">
             <div class="card">
                 <div class="card-body">
                     <div class="table-responsive">
@@ -693,7 +693,7 @@
                                     <th class="sortable" data-column="pod_phase">Status {% if sort_column == 'pod_phase' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_limit_bytes">Memory Limit {% if sort_column == 'memory_limit_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th class="sortable" data-column="memory_usage_bytes">Memory Actual (current/max) {% if sort_column == 'memory_usage_bytes' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
-                                    <th class="sortable" data-column="utilization_pct">Utilization % (current/max) {% if sort_column == 'utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
+                                    <th class="sortable" data-column="memory_limit_utilization_pct">Utilization % (current/max) {% if sort_column == 'memory_limit_utilization_pct' %}{% if sort_direction == 'asc' %}↑{% else %}↓{% endif %}{% endif %}</th>
                                     <th>Recommendations</th>
                                 </tr>
                             </thead>
@@ -732,14 +732,15 @@
     </div>
 
     <!-- Pagination -->
+    {% set _base_params %}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}&active_tab={{ active_tab }}{% if not hide_incomplete %}&hide_incomplete=false{% endif %}{% endset %}
     <nav aria-label="Resource pagination" class="mt-3">
         <ul class="pagination justify-content-center">
             {% if current_page > 1 %}
             <li class="page-item">
-                <a class="page-link" href="/dashboard?page={{ current_page - 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Previous</a>
+                <a class="page-link" href="/dashboard?page={{ current_page - 1 }}{{ _base_params }}">Previous</a>
             </li>
             {% endif %}
-            
+
             {% for page_num in range(1, total_pages + 1) %}
                 {% if page_num == current_page %}
                 <li class="page-item active">
@@ -747,14 +748,14 @@
                 </li>
                 {% elif page_num <= 5 or page_num > total_pages - 5 or (page_num >= current_page - 2 and page_num <= current_page + 2) %}
                 <li class="page-item">
-                    <a class="page-link" href="/dashboard?page={{ page_num }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">{{ page_num }}</a>
+                    <a class="page-link" href="/dashboard?page={{ page_num }}{{ _base_params }}">{{ page_num }}</a>
                 </li>
                 {% endif %}
             {% endfor %}
-            
+
             {% if current_page < total_pages %}
             <li class="page-item">
-                <a class="page-link" href="/dashboard?page={{ current_page + 1 }}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}">Next</a>
+                <a class="page-link" href="/dashboard?page={{ current_page + 1 }}{{ _base_params }}">Next</a>
             </li>
             {% endif %}
         </ul>
