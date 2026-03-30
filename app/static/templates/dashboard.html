@@ -843,7 +843,7 @@
                         <i class="fas fa-info-circle"></i>
                         <strong>Recommendation Logic:</strong>
                         <ul class="mb-0 mt-2">
-                            <li><strong>Requests</strong> are based on current usage with appropriate rounding (50m/100m for CPU, 64Mi/128Mi/0.1Gi for memory)</li>
+                            <li><strong>Requests</strong> are based on the trimmed mean (bottom 80% of historical samples, excluding top 20% spikes) with appropriate rounding (50m/100m for CPU, 64Mi/128Mi/0.1Gi for memory)</li>
                             <li><strong>Limits</strong> are based on historical maximum usage with 25% headroom to prevent OOMKilled</li>
                             <li>Historical data shows current/max values to provide full context</li>
                             <li>All values consider the entire pod lifecycle for accurate resource planning</li>

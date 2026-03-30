@@ -135,9 +135,9 @@ Essential environment variables in `.env`:
 
 - **Async/await throughout**: All I/O operations are asynchronous
 - **Resource parsing**: Custom CPU (millicores) and memory (bytes with suffixes) parsers in KubernetesService
-- **Historical data analysis**: Backend calculations of min/max/current values for accurate resource recommendations
-- **Smart recommendations algorithm**: 
-  - Requests based on current usage with proper rounding (50m/100m for CPU, 64Mi/128Mi/0.1Gi for memory)
+- **Historical data analysis**: Backend calculations of min/max/trimmed-mean values for accurate resource recommendations
+- **Smart recommendations algorithm**:
+  - Requests based on trimmed mean (bottom 80% of sorted historical samples) with proper rounding (50m/100m for CPU, 64Mi/128Mi/0.1Gi for memory)
   - Limits based on historical maximum with 25% headroom to prevent OOMKilled
 - **Context managers**: Proper cleanup for HTTP and K8s clients
 - **Environment-driven config**: Production-ready defaults with .env override

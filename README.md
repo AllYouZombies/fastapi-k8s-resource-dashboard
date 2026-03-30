@@ -106,7 +106,7 @@ docker-compose logs -f
 - Smart recommendation buttons in each table row
 
 **Recommendation system:**
-- Requests based on current consumption patterns
+- Requests based on trimmed mean (bottom 80% of historical samples) to reflect steady-state consumption
 - Limits calculated from historical maximum usage + 25% headroom
 - Auto-generated ready-to-use YAML configurations
 

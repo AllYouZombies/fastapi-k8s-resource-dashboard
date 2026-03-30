@@ -654,25 +654,33 @@ async def get_resource_recommendations(
     # Get latest record for current values and settings
     latest_record = max(historical_data, key=lambda x: x.timestamp)
 
+    sample_count = len(cpu_values)
+    cpu_trimmed_mean = calculate_trimmed_mean(cpu_values)
+    memory_trimmed_mean = calculate_trimmed_mean(memory_values)
+
     stats = {
         "cpu_min": min(cpu_values) if cpu_values else 0,
         "cpu_max": max(cpu_values) if cpu_values else 0,
         "cpu_current": latest_record.cpu_usage_cores or 0,
+        "cpu_trimmed_mean": cpu_trimmed_mean,
         "memory_min": min(memory_values) if memory_values else 0,
         "memory_max": max(memory_values) if memory_values else 0,
         "memory_current": latest_record.memory_usage_bytes or 0,
+        "memory_trimmed_mean": memory_trimmed_mean,
+        "sample_count": sample_count,
         "cpu_request": latest_record.cpu_request_cores or 0,
         "cpu_limit": latest_record.cpu_limit_cores or 0,
         "memory_request": latest_record.memory_request_bytes or 0,
         "memory_limit": latest_record.memory_limit_bytes or 0,
     }
 
-    # Calculate recommendations based on max values (for limits)
+    # Calculate recommendations: requests from trimmed mean, limits from max
     recommendations = calculate_resource_recommendations(
-        current_cpu_cores=stats["cpu_current"],
+        request_cpu_cores=stats["cpu_trimmed_mean"],
         max_cpu_cores=stats["cpu_max"],
-        current_memory_bytes=stats["memory_current"],
+        request_memory_bytes=stats["memory_trimmed_mean"],
         max_memory_bytes=stats["memory_max"],
+        sample_count=stats["sample_count"],
     )
 
     return {
@@ -692,12 +700,15 @@ async def get_resource_recommendations(
                 "min": stats["cpu_min"],
                 "max": stats["cpu_max"],
                 "current": stats["cpu_current"],
+                "trimmed_mean": stats["cpu_trimmed_mean"],
             },
             "memory": {
                 "min": stats["memory_min"],
                 "max": stats["memory_max"],
                 "current": stats["memory_current"],
+                "trimmed_mean": stats["memory_trimmed_mean"],
             },
+            "sample_count": stats["sample_count"],
         },
         "current_settings": {
             "cpu_request": stats["cpu_request"],
@@ -709,30 +720,45 @@ async def get_resource_recommendations(
     }
 
 
+def calculate_trimmed_mean(values: list, trim_fraction: float = 0.20) -> float:
+    """Return mean of the bottom (1 - trim_fraction) of values.
+
+    Falls back to a simple mean when fewer than 5 samples are available.
+    """
+    if not values:
+        return 0.0
+    if len(values) < 5:
+        return sum(values) / len(values)
+    sorted_vals = sorted(values)
+    keep = max(1, int(len(sorted_vals) * (1 - trim_fraction)))
+    return sum(sorted_vals[:keep]) / keep
+
+
 def calculate_resource_recommendations(
-    current_cpu_cores: float,
+    request_cpu_cores: float,
     max_cpu_cores: float,
-    current_memory_bytes: int,
-    max_memory_bytes: int,
+    request_memory_bytes: float,
+    max_memory_bytes: float,
+    sample_count: int = 0,
 ):
-    """Calculate resource recommendations based on current and max usage."""
+    """Calculate resource recommendations based on trimmed mean (requests) and max (limits)."""
 
     # Convert to more convenient units
-    current_cpu_millicores = int(current_cpu_cores * 1000)
+    req_cpu_millicores = int(request_cpu_cores * 1000)
     max_cpu_millicores = int(max_cpu_cores * 1000)
-    current_memory_mi = current_memory_bytes / (1024 * 1024)
+    req_memory_mi = request_memory_bytes / (1024 * 1024)
     max_memory_mi = max_memory_bytes / (1024 * 1024)
 
     # CPU recommendations
-    # Requests based on current usage
-    if current_cpu_millicores < 50:
+    # Requests based on trimmed mean of historical samples
+    if req_cpu_millicores < 50:
         cpu_request_millicores = 50  # Minimum 50m
-    elif current_cpu_millicores <= 1000:
+    elif req_cpu_millicores <= 1000:
         # Round to nearest 50m increment
-        cpu_request_millicores = ((current_cpu_millicores + 49) // 50) * 50
+        cpu_request_millicores = ((req_cpu_millicores + 49) // 50) * 50
     else:
         # Round to nearest 100m increment for values above 1000m
-        cpu_request_millicores = ((current_cpu_millicores + 99) // 100) * 100
+        cpu_request_millicores = ((req_cpu_millicores + 99) // 100) * 100
 
     # Limits based on max usage - ensure max usage is within 80% of limit
     target_cpu_limit = max(max_cpu_millicores / 0.8, cpu_request_millicores * 1.25)
@@ -742,24 +768,24 @@ def calculate_resource_recommendations(
         cpu_limit_millicores = int(((target_cpu_limit + 99) // 100) * 100)
 
     # Memory recommendations
-    # Requests based on current usage
-    if current_memory_mi < 10:
+    # Requests based on trimmed mean of historical samples
+    if req_memory_mi < 10:
         memory_request = {"value": 64, "unit": "Mi"}
-    elif current_memory_mi < 512:
+    elif req_memory_mi < 512:
         # Round up to 64Mi increments
-        rounded = int(((current_memory_mi + 63) // 64) * 64)
+        rounded = int(((req_memory_mi + 63) // 64) * 64)
         memory_request = {"value": rounded, "unit": "Mi"}
-    elif current_memory_mi < 1000:
+    elif req_memory_mi < 1000:
         # Round up to 128Mi increments
-        rounded = int(((current_memory_mi + 127) // 128) * 128)
+        rounded = int(((req_memory_mi + 127) // 128) * 128)
         memory_request = {"value": rounded, "unit": "Mi"}
     else:
         # Round up to 0.1Gi increments
-        rounded_gi = round((current_memory_mi / 1024) * 10) / 10
+        rounded_gi = round((req_memory_mi / 1024) * 10) / 10
         memory_request = {"value": rounded_gi, "unit": "Gi"}
 
     # Limits based on max usage - ensure max usage is within 80% of limit
-    target_memory_mi = max(max_memory_mi / 0.8, current_memory_mi * 1.25)
+    target_memory_mi = max(max_memory_mi / 0.8, req_memory_mi * 1.25)
     if target_memory_mi < 512:
         rounded = int(((target_memory_mi + 63) // 64) * 64)
         memory_limit = {"value": rounded, "unit": "Mi"}
@@ -770,6 +796,7 @@ def calculate_resource_recommendations(
         rounded_gi = round((target_memory_mi / 1024) * 10) / 10
         memory_limit = {"value": rounded_gi, "unit": "Gi"}
 
+    sample_label = f"{sample_count} samples" if sample_count >= 5 else f"{sample_count} samples (simple mean)"
     return {
         "cpu": {
             "request": {
@@ -786,12 +813,12 @@ def calculate_resource_recommendations(
             cpu_request_millicores, cpu_limit_millicores, memory_request, memory_limit
         ),
         "rationale": {
-            "cpu_request": f"Based on current usage of {current_cpu_millicores}m, "
-            "rounded to appropriate increment",
+            "cpu_request": f"Trimmed mean (bottom 80%) of {sample_label}: "
+            f"{req_cpu_millicores}m, rounded to nearest increment",
             "cpu_limit": f"Based on max usage of {max_cpu_millicores}m "
             "with 25% headroom for spikes",
-            "memory_request": f"Based on current usage of {int(current_memory_mi)}Mi, "
-            "rounded to appropriate increment",
+            "memory_request": f"Trimmed mean (bottom 80%) of {sample_label}: "
+            f"{int(req_memory_mi)}Mi, rounded to nearest increment",
             "memory_limit": f"Based on max usage of {int(max_memory_mi)}Mi "
             "with 25% headroom for spikes",
         },
