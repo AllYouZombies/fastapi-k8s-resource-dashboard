@@ -57,51 +57,56 @@ class PrometheusService:
             raise
 
     async def get_pod_cpu_usage(self) -> Dict[str, float]:
-        """Get CPU usage by pod."""
-        query = """
-sum(rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m])) by (namespace, pod)
-"""  # noqa: E501
+        """Get CPU usage by container (keyed as namespace/pod/container)."""
+        query = (
+            'sum(rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m]))'
+            " by (namespace, pod, container)"
+        )
 
         try:
             data = await self.query_prometheus(query)
-            usage_by_pod = {}
+            usage_by_container = {}
 
             for result in data["result"]:
                 metric = result["metric"]
                 namespace = metric.get("namespace", "")
                 pod = metric.get("pod", "")
+                container = metric.get("container", "")
                 usage = float(result["value"][1])
 
-                if namespace and pod:
-                    key = f"{namespace}/{pod}"
-                    usage_by_pod[key] = usage
+                if namespace and pod and container:
+                    key = f"{namespace}/{pod}/{container}"
+                    usage_by_container[key] = usage
 
-            return usage_by_pod
+            return usage_by_container
 
         except Exception as e:
             logger.error(f"Error getting CPU usage: {e}")
             return {}
 
     async def get_pod_memory_usage(self) -> Dict[str, int]:
-        """Get memory usage by pod."""
-        query = """sum(container_memory_working_set_bytes{
-        container!="POD",container!=""}) by (namespace, pod)"""
+        """Get memory usage by container (keyed as namespace/pod/container)."""
+        query = (
+            'sum(container_memory_working_set_bytes{container!="POD",container!=""})'
+            " by (namespace, pod, container)"
+        )
 
         try:
             data = await self.query_prometheus(query)
-            usage_by_pod = {}
+            usage_by_container = {}
 
             for result in data["result"]:
                 metric = result["metric"]
                 namespace = metric.get("namespace", "")
                 pod = metric.get("pod", "")
+                container = metric.get("container", "")
                 usage = int(float(result["value"][1]))
 
-                if namespace and pod:
-                    key = f"{namespace}/{pod}"
-                    usage_by_pod[key] = usage
+                if namespace and pod and container:
+                    key = f"{namespace}/{pod}/{container}"
+                    usage_by_container[key] = usage
 
-            return usage_by_pod
+            return usage_by_container
 
         except Exception as e:
             logger.error(f"Error getting memory usage: {e}")

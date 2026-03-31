@@ -55,11 +55,11 @@ class ResourceCollectorService:
         metrics_to_store = []
 
         for pod in pods_data:
-            pod_key = f"{pod['namespace']}/{pod['name']}"
-            cpu_usage = usage_metrics["cpu_usage"].get(pod_key, 0.0)
-            memory_usage = usage_metrics["memory_usage"].get(pod_key, 0)
-
             for container in pod["containers"]:
+                container_key = f"{pod['namespace']}/{pod['name']}/{container['name']}"
+                cpu_usage = usage_metrics["cpu_usage"].get(container_key, 0.0)
+                memory_usage = usage_metrics["memory_usage"].get(container_key, 0)
+
                 metric = ResourceMetric(
                     timestamp=timestamp,
                     namespace=pod["namespace"],
@@ -72,10 +72,9 @@ class ResourceCollectorService:
                     memory_request_bytes=container["requests"]["memory"],
                     cpu_limit_cores=container["limits"]["cpu"],
                     memory_limit_bytes=container["limits"]["memory"],
-                    # Actual usage
-                    cpu_usage_cores=cpu_usage
-                    / len(pod["containers"]),  # Distribute evenly
-                    memory_usage_bytes=memory_usage // len(pod["containers"]),
+                    # Actual usage (per-container from Prometheus)
+                    cpu_usage_cores=cpu_usage,
+                    memory_usage_bytes=memory_usage,
                 )
                 metrics_to_store.append(metric)
 
