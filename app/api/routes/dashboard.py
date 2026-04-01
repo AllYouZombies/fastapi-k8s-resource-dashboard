@@ -53,10 +53,6 @@ async def dashboard_home(
             ResourceMetric.cpu_request_cores > 0,
             ResourceMetric.memory_request_bytes.isnot(None),
             ResourceMetric.memory_request_bytes > 0,
-            ResourceMetric.cpu_limit_cores.isnot(None),
-            ResourceMetric.cpu_limit_cores > 0,
-            ResourceMetric.memory_limit_bytes.isnot(None),
-            ResourceMetric.memory_limit_bytes > 0,
         )
 
     # Apply sorting
