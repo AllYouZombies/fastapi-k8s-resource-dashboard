@@ -134,14 +134,22 @@ class KubernetesService:
             "Mi": 1024**2,
             "Gi": 1024**3,
             "Ti": 1024**4,
+            "Pi": 1024**5,
+            "Ei": 1024**6,
             "K": 1000,
             "M": 1000**2,
             "G": 1000**3,
             "T": 1000**4,
+            "P": 1000**5,
+            "E": 1000**6,
         }
 
         for suffix, multiplier in multipliers.items():
             if memory_str.endswith(suffix):
                 return int(float(memory_str[: -len(suffix)]) * multiplier)
+
+        # Handle "m" (milli) suffix — Kubernetes allows millibytes
+        if memory_str.endswith("m"):
+            return int(float(memory_str[:-1]) / 1000)
 
         return int(memory_str)
