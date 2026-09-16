@@ -23,7 +23,7 @@ async def dashboard_home(
     node: Optional[str] = Query(None),
     sort_column: Optional[str] = Query(None),
     sort_direction: Optional[str] = Query("asc"),
-    hide_incomplete: Optional[bool] = Query(False),
+    hide_incomplete: Optional[bool] = Query(True),
     active_tab: Optional[str] = Query(None),
     db: Session = Depends(get_database_session),
 ):
@@ -502,24 +502,18 @@ async def get_chart_data(
 
     # Get metrics from the last N hours - exclude inactive pods and excluded namespaces
     cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-    recent_metrics = (
-        db.query(ResourceMetric)
-        .filter(
-            ResourceMetric.timestamp >= cutoff_time,
-            ResourceMetric.pod_phase.in_(
-                ["Running", "Pending", "Unknown"]
-            ),  # Exclude Succeeded, Failed
-            ~ResourceMetric.namespace.in_(
-                settings.excluded_namespaces_list
-            ),  # Exclude excluded namespaces
-        )
-        .order_by(ResourceMetric.timestamp)
-        .all()
+    recent_query = db.query(ResourceMetric).filter(
+        ResourceMetric.timestamp >= cutoff_time,
+        ResourceMetric.pod_phase.in_(
+            ["Running", "Pending", "Unknown"]
+        ),  # Exclude Succeeded, Failed
+        ~ResourceMetric.namespace.in_(
+            settings.excluded_namespaces_list
+        ),  # Exclude excluded namespaces
     )
     if node:
-        recent_metrics = [
-            metric for metric in recent_metrics if metric.node_name == node
-        ]
+        recent_query = recent_query.filter(ResourceMetric.node_name == node)
+    recent_metrics = recent_query.order_by(ResourceMetric.timestamp).all()
 
     # Group by timestamp (5-minute intervals)
     time_groups = defaultdict(list)
@@ -845,7 +839,11 @@ def calculate_resource_recommendations(
         rounded_gi = round((target_memory_mi / 1024) * 10) / 10
         memory_limit = {"value": rounded_gi, "unit": "Gi"}
 
-    sample_label = f"{sample_count} samples" if sample_count >= 5 else f"{sample_count} samples (simple mean)"
+    sample_label = (
+        f"{sample_count} samples"
+        if sample_count >= 5
+        else f"{sample_count} samples (simple mean)"
+    )
     return {
         "cpu": {
             "request": {

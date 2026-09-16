@@ -744,7 +744,7 @@
     </div>
 
     <!-- Pagination -->
-    {% set _base_params %}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if selected_node != 'all' %}&node={{ selected_node }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}&active_tab={{ active_tab }}{% if hide_incomplete %}&hide_incomplete=true{% endif %}{% endset %}
+    {% set _base_params %}{% if search %}&search={{ search }}{% endif %}{% if selected_namespace != 'all' %}&namespace={{ selected_namespace }}{% endif %}{% if selected_node != 'all' %}&node={{ selected_node }}{% endif %}{% if sort_column %}&sort_column={{ sort_column }}&sort_direction={{ sort_direction }}{% endif %}&active_tab={{ active_tab }}{% if not hide_incomplete %}&hide_incomplete=false{% endif %}{% endset %}
     <nav aria-label="Resource pagination" class="mt-3">
         <ul class="pagination justify-content-center">
             {% if current_page > 1 %}
