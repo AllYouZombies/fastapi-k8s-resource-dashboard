@@ -15,16 +15,13 @@ kubernetes-asyncio==24.2.3
 kubernetes==28.1.0
 
 # HTTP client for Prometheus
-aiohttp==3.12.14
+aiohttp==3.14.3
 
 # Background task scheduler
 apscheduler==3.10.4
 
 # Template engine
 jinja2==3.1.6
-
-# Static file serving
-python-multipart==0.0.18
 
 # Logging and utilities
 python-json-logger==2.0.7

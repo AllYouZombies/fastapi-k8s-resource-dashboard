@@ -817,7 +817,11 @@ def calculate_resource_recommendations(
         rounded_gi = round((target_memory_mi / 1024) * 10) / 10
         memory_limit = {"value": rounded_gi, "unit": "Gi"}
 
-    sample_label = f"{sample_count} samples" if sample_count >= 5 else f"{sample_count} samples (simple mean)"
+    sample_label = (
+        f"{sample_count} samples"
+        if sample_count >= 5
+        else f"{sample_count} samples (simple mean)"
+    )
     return {
         "cpu": {
             "request": {
