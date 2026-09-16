@@ -59,8 +59,12 @@ class PrometheusService:
     async def get_pod_cpu_usage(self) -> Dict[str, float]:
         """Get CPU usage by container (keyed as namespace/pod/container)."""
         query = (
-            'sum(rate(container_cpu_usage_seconds_total{container!="POD",container!=""}[5m]))'
-            " by (namespace, pod, container)"
+            'sum(rate(container_cpu_usage_seconds_total{container!="POD",'
+            'container!=""}[5m])) by (namespace, pod, container) or '
+            'sum(label_replace(label_replace(rate(container_cpu_usage_seconds_total'
+            '{pod_name!="",container_name!="",pod_container_image!=""}[5m]), '
+            '"pod", "$1", "pod_name", "(.*)"), "container", "$1", '
+            '"container_name", "(.*)")) by (namespace, pod, container)'
         )
 
         try:
@@ -87,8 +91,12 @@ class PrometheusService:
     async def get_pod_memory_usage(self) -> Dict[str, int]:
         """Get memory usage by container (keyed as namespace/pod/container)."""
         query = (
-            'sum(container_memory_working_set_bytes{container!="POD",container!=""})'
-            " by (namespace, pod, container)"
+            'sum(container_memory_working_set_bytes{container!="POD",'
+            'container!=""}) by (namespace, pod, container) or '
+            'sum(label_replace(label_replace(container_memory_working_set_bytes'
+            '{pod_name!="",container_name!="",pod_container_image!=""}, '
+            '"pod", "$1", "pod_name", "(.*)"), "container", "$1", '
+            '"container_name", "(.*)")) by (namespace, pod, container)'
         )
 
         try:

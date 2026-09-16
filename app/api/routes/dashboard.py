@@ -20,9 +20,10 @@ async def dashboard_home(
     page: int = Query(1, ge=1),
     search: Optional[str] = Query(None),
     namespace: Optional[str] = Query(None),
+    node: Optional[str] = Query(None),
     sort_column: Optional[str] = Query(None),
     sort_direction: Optional[str] = Query("asc"),
-    hide_incomplete: Optional[bool] = Query(True),
+    hide_incomplete: Optional[bool] = Query(False),
     active_tab: Optional[str] = Query(None),
     db: Session = Depends(get_database_session),
 ):
@@ -46,6 +47,8 @@ async def dashboard_home(
 
     if namespace:
         query = query.filter(ResourceMetric.namespace == namespace)
+    if node:
+        query = query.filter(ResourceMetric.node_name == node)
 
     if hide_incomplete:
         query = query.filter(
@@ -113,6 +116,19 @@ async def dashboard_home(
         .all()
     )
     namespaces = [ns[0] for ns in namespaces]
+
+    nodes = (
+        db.query(ResourceMetric.node_name)
+        .filter(
+            ResourceMetric.timestamp
+            == db.query(func.max(ResourceMetric.timestamp)).scalar(),
+            ResourceMetric.node_name.isnot(None),
+        )
+        .distinct()
+        .order_by(ResourceMetric.node_name)
+        .all()
+    )
+    nodes = [node_name[0] for node_name in nodes]
 
     # Prepare data for tables
     cpu_requests_data = []
@@ -352,6 +368,8 @@ async def dashboard_home(
         all_query = all_query.filter(ResourceMetric.pod_name.contains(search))
     if namespace:
         all_query = all_query.filter(ResourceMetric.namespace == namespace)
+    if node:
+        all_query = all_query.filter(ResourceMetric.node_name == node)
 
     all_resources = all_query.all()
 
@@ -394,11 +412,13 @@ async def dashboard_home(
             "memory_limits_data": memory_limits_data,
             "summary_stats": summary_stats,
             "namespaces": namespaces,
+            "nodes": nodes,
             "current_page": page,
             "total_pages": total_pages,
             "total_count": total_count,
             "search": search or "",
             "selected_namespace": namespace or "all",
+            "selected_node": node or "all",
             "page_size": settings.page_size,
             "sort_column": sort_column or "",
             "sort_direction": sort_direction,
@@ -412,6 +432,7 @@ async def dashboard_home(
 async def get_summary_stats(
     search: Optional[str] = Query(None),
     namespace: Optional[str] = Query(None),
+    node: Optional[str] = Query(None),
     db: Session = Depends(get_database_session),
 ):
     """API endpoint for summary statistics."""
@@ -432,6 +453,8 @@ async def get_summary_stats(
         all_query = all_query.filter(ResourceMetric.pod_name.contains(search))
     if namespace:
         all_query = all_query.filter(ResourceMetric.namespace == namespace)
+    if node:
+        all_query = all_query.filter(ResourceMetric.node_name == node)
 
     all_resources = all_query.all()
 
@@ -468,6 +491,7 @@ async def get_summary_stats(
 @router.get("/api/chart-data")
 async def get_chart_data(
     hours: int = Query(24, ge=1, le=168),  # Max 1 week
+    node: Optional[str] = Query(None),
     db: Session = Depends(get_database_session),
 ):
     """API endpoint for chart data with historical data."""
@@ -492,6 +516,10 @@ async def get_chart_data(
         .order_by(ResourceMetric.timestamp)
         .all()
     )
+    if node:
+        recent_metrics = [
+            metric for metric in recent_metrics if metric.node_name == node
+        ]
 
     # Group by timestamp (5-minute intervals)
     time_groups = defaultdict(list)
