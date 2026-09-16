@@ -149,6 +149,25 @@ function setupTableControls() {
         // Reload table and summary data
         loadTableData();
         loadSummaryData();
+        loadChartData();
+    });
+
+    // Node filter
+    $('#nodeFilter').on('change', function() {
+        const selectedNode = this.value;
+        const params = new URLSearchParams(window.location.search);
+        if (selectedNode === 'all') {
+            params.delete('node');
+        } else {
+            params.set('node', selectedNode);
+        }
+        params.set('page', '1');
+
+        window.history.pushState({}, '', '/dashboard?' + params.toString());
+
+        loadTableData();
+        loadSummaryData();
+        loadChartData();
     });
 
     // Hide incomplete data filter
@@ -158,7 +177,7 @@ function setupTableControls() {
         if (isChecked) {
             params.set('hide_incomplete', 'true');
         } else {
-            params.delete('hide_incomplete');
+            params.set('hide_incomplete', 'false');
         }
         params.set('page', '1');
         
@@ -405,7 +424,9 @@ function initializeCharts() {
 // Load and update chart data
 async function loadChartData() {
     try {
-        const response = await fetch('/api/chart-data?hours=24');
+        const params = new URLSearchParams(window.location.search);
+        params.set('hours', '24');
+        const response = await fetch('/api/chart-data?' + params.toString());
         if (!response.ok) throw new Error('Failed to fetch chart data');
 
         const data = await response.json();
