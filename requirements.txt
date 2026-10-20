@@ -15,7 +15,7 @@ kubernetes-asyncio==24.2.3
 kubernetes==28.1.0
 
 # HTTP client for Prometheus
-aiohttp==3.14.3
+aiohttp==3.14.4
 
 # Background task scheduler
 apscheduler==3.10.4
